@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/*
+ * Theme tokens extracted from design/prd-doc-reference.html.
+ * Every value below appears verbatim in the reference, with two
+ * consolidations of near-duplicate grays:
+ *   #5b6570 (flag reason text)  -> ink-600 #5b6b78
+ *   #cdd7df (scrollbar thumb)   -> line-600 #cfd8df
+ */
+/* `static` so all tokens are emitted even before a utility references them */
+@theme static {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Surfaces */
+  --color-canvas: #eef1f4; /* app background */
+  --color-paper: #fbfcfd; /* document card, chrome bars */
+  --color-paper-tint: #f4f7f9; /* document masthead */
+  --color-panel: #f5f8fa; /* side panel background */
+  --color-well: #f7f9fb; /* inline comment well */
+
+  /* Text (dark to light) */
+  --color-ink-950: #1c2530; /* titles, primary text */
+  --color-ink-900: #2a3742; /* section headings, user chat bubble */
+  --color-ink-800: #3a4650; /* document body text */
+  --color-ink-700: #48555f; /* comment body text */
+  --color-ink-600: #5b6b78; /* secondary UI text, neutral avatar */
+  --color-ink-500: #8b98a4; /* muted labels, requirement refs */
+  --color-ink-400: #9aa6b0; /* faint labels, kickers */
+  --color-ink-300: #a7b3bd; /* timestamps, rubric strip */
+  --color-ink-200: #b3bec7; /* section numbers */
+  --color-ink-100: #c3ccd3; /* list bullets */
+  --color-ink-inverse: #e8eef2; /* text on dark bubbles */
+
+  /* Borders and separators (light to dark) */
+  --color-line-100: #eef2f5; /* row separators */
+  --color-line-200: #e4eaef; /* soft borders, comment well */
+  --color-line-300: #e0e6eb; /* vertical dividers */
+  --color-line-400: #dbe3e9; /* card and chip borders */
+  --color-line-500: #d3dce3; /* chrome borders */
+  --color-line-600: #cfd8df; /* neutral button border, scrollbar */
+
+  /* Accent (primary green) */
+  --color-accent: #2f7a63;
+  --color-accent-strong: #276353; /* hover on solid accent */
+  --color-accent-tint: #e2efe9; /* tinted button background */
+  --color-accent-tint-strong: #d5e9df; /* hover on tinted background */
+  --color-accent-line: #b9ddce; /* tinted button border */
+
+  /* Critic flag: defect (rubric dimensions 1-3) */
+  --color-defect: #c0562f;
+  --color-defect-underline: #d98a63; /* dotted underline on flagged text */
+
+  /* Critic flag: judgment (rubric dimensions 4-5) */
+  --color-judgment: #9a7420;
+  --color-judgment-tint: #f4ead0;
+  --color-judgment-tint-strong: #efe0bd; /* hover on tinted background */
+  --color-judgment-line: #e0cf9e;
+  --color-judgment-underline: #cbab5e; /* dotted underline on flagged text */
+  --color-judgment-well: #faf3e0; /* hover on white judgment button */
+
+  /* Elevation */
+  --shadow-doc:
+    0 1px 2px rgba(30, 45, 60, 0.05), 0 16px 44px rgba(30, 45, 60, 0.06);
+}
+
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-ink-950 antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-600);
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

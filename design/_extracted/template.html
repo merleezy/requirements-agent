@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="ba4141c5-2887-4573-92b8-82bf72b40935"></script>
+
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<style>/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("e3adfc21-3820-4c23-a5a0-66266ad70c18") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("ea9b2b55-75da-4604-817e-dadf92b84331") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("6be576b0-cda2-4cc3-bed9-8612295b5634") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("7594a8fe-d041-40ed-b92c-66446cd445c4") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("a5ac110c-e49c-44a0-991e-0088dd4fba5f") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("1d9685b7-6723-4b65-878a-443105a35083") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("30f579b3-fec6-4c87-a011-e8fdc816a351") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("dfb85a36-2d86-4b83-8f1f-815658bdabbf") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("d0c711c7-e048-4181-8881-bc84353dfd34") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("f7fe5392-d78e-45cd-80df-7a6107be8f6a") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("2e03196e-26f6-45d7-985f-aa988ba8a74c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("7a79bc81-a4f3-4729-94a8-dd93dafea2aa") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("ad241e2c-4d75-48bd-9d9b-5241ebdf1ac2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("8eaf5de9-f866-4efa-b2cb-cf3a92e557e8") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("64651acf-511d-4b28-8d7c-eabd88005056") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5f5bad83-0c6b-4b69-95ea-6c5b434cf16c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5b682908-dde8-418f-b6b7-0fbd1f56245d") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("38cf2f70-c078-40a2-961e-27a0e1b8e7d4") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("37f28ae9-d523-475c-b429-7d90c96221f0") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("42250679-d006-4c72-a9f9-1067a1ae8f86") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("eb3b794a-e287-4680-9149-3e60b87c3c5a") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5f5bad83-0c6b-4b69-95ea-6c5b434cf16c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5b682908-dde8-418f-b6b7-0fbd1f56245d") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("38cf2f70-c078-40a2-961e-27a0e1b8e7d4") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("37f28ae9-d523-475c-b429-7d90c96221f0") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("42250679-d006-4c72-a9f9-1067a1ae8f86") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("eb3b794a-e287-4680-9149-3e60b87c3c5a") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5f5bad83-0c6b-4b69-95ea-6c5b434cf16c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5b682908-dde8-418f-b6b7-0fbd1f56245d") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("38cf2f70-c078-40a2-961e-27a0e1b8e7d4") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("37f28ae9-d523-475c-b429-7d90c96221f0") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("42250679-d006-4c72-a9f9-1067a1ae8f86") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("eb3b794a-e287-4680-9149-3e60b87c3c5a") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5f5bad83-0c6b-4b69-95ea-6c5b434cf16c") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("5b682908-dde8-418f-b6b7-0fbd1f56245d") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("38cf2f70-c078-40a2-961e-27a0e1b8e7d4") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("37f28ae9-d523-475c-b429-7d90c96221f0") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("42250679-d006-4c72-a9f9-1067a1ae8f86") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("eb3b794a-e287-4680-9149-3e60b87c3c5a") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("f0a51519-98ae-4d5b-a11a-9232289db279") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fff87329-7386-4557-96aa-ceba5f9b2299") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("ef450657-c7e5-45de-a677-e98ced2c8245") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("f0a51519-98ae-4d5b-a11a-9232289db279") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fff87329-7386-4557-96aa-ceba5f9b2299") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("ef450657-c7e5-45de-a677-e98ced2c8245") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("f0a51519-98ae-4d5b-a11a-9232289db279") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fff87329-7386-4557-96aa-ceba5f9b2299") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("ef450657-c7e5-45de-a677-e98ced2c8245") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("f0a51519-98ae-4d5b-a11a-9232289db279") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("fff87329-7386-4557-96aa-ceba5f9b2299") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("ef450657-c7e5-45de-a677-e98ced2c8245") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>
+  body{margin:0;background:#eef1f4;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1c2530}
+  *{box-sizing:border-box}
+  textarea,input{font-family:inherit}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#cdd7df;border-radius:6px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+  @keyframes popIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+
+<div style="height:100vh;display:flex;flex-direction:column;background:#eef1f4">
+
+  <!-- top bar -->
+  <div style="flex:none;height:54px;background:#fbfcfd;border-bottom:1px solid #d3dce3;display:flex;align-items:center;justify-content:space-between;padding:0 24px">
+    <div style="display:flex;align-items:center;gap:14px;min-width:0">
+      <div style="font:600 13px 'Space Grotesk',sans-serif;color:#1c2530;letter-spacing:-.01em">Receipt Capture</div>
+      <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#9aa6b0;text-transform:uppercase">PRD · Draft v3</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="font:500 10.5px 'IBM Plex Mono',monospace;color:#8b98a4">{{ flagSummary }}</div>
+      <div style="width:1px;height:20px;background:#e0e6eb"></div>
+      <div style="font:600 11px 'IBM Plex Mono',monospace;color:#2f7a63;background:#e2efe9;border:1px solid #b9ddce;padding:4px 11px;border-radius:4px;cursor:pointer">Export</div>
+    </div>
+  </div>
+
+  <!-- body row -->
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- ===== LEFT · PRD DOCUMENT ===== -->
+    <div style="flex:1;overflow:auto;min-height:0;padding:34px 34px 90px;display:flex;justify-content:center;align-items:flex-start">
+      <div style="width:100%;max-width:740px;background:#fbfcfd;border:1px solid #dbe3e9;border-radius:8px;box-shadow:0 1px 2px rgba(30,45,60,.05),0 16px 44px rgba(30,45,60,.06);overflow:hidden">
+
+        <!-- masthead -->
+        <div style="padding:32px 40px 24px;border-bottom:1px solid #e4eaef;background:#f4f7f9">
+          <div style="font:500 10px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#9aa6b0;text-transform:uppercase;margin-bottom:9px">Product Requirements Document</div>
+          <div style="font:700 27px/1.15 'Space Grotesk',sans-serif;color:#1c2530;letter-spacing:-.015em">Receipt Capture &amp; Extraction</div>
+          <div style="font:400 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#8b98a4;margin-top:6px">Auto-fill expense fields from a photographed or uploaded receipt.</div>
+        </div>
+
+        <!-- §1 Problem Statement -->
+        <div style="border-bottom:1px solid #eef2f5;padding:20px 40px 22px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">01</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Problem Statement</span></div>
+          <div style="font:400 14px/1.6 'IBM Plex Sans',sans-serif;color:#3a4650">{{ problem.text }}</div>
+          <div style="margin-top:8px">
+            <span onclick="{{ problem.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ problem.a.commentLabel }}</span>
+            <sc-if value="{{ problem.a.open }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:520px">
+                <sc-for list="{{ problem.a.comments }}" as="c" hint-placeholder-count="1">
+                  <div style="display:flex;gap:9px;margin-bottom:11px">
+                    <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                    <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                  </div>
+                </sc-for>
+                <div style="display:flex;gap:8px;align-items:flex-end">
+                  <textarea rows="1" value="{{ problem.a.draft }}" onchange="{{ problem.a.onInput }}" onkeydown="{{ problem.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                  <span onclick="{{ problem.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <!-- §2 Target Users -->
+        <div style="border-bottom:1px solid #eef2f5;padding:20px 40px 12px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">02</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Target Users</span></div>
+          <sc-for list="{{ personas }}" as="b" hint-placeholder-count="3">
+            <div style="padding-bottom:14px">
+              <div style="display:flex;gap:11px;font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3a4650">
+                <span style="flex:none;width:5px;height:5px;border-radius:50%;background:#c3ccd3;margin-top:8px"></span>
+                <span>{{ b.text }}</span>
+              </div>
+              <div style="padding-left:16px;margin-top:5px">
+                <span onclick="{{ b.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ b.a.commentLabel }}</span>
+                <sc-if value="{{ b.a.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:500px">
+                    <sc-for list="{{ b.a.comments }}" as="c" hint-placeholder-count="0">
+                      <div style="display:flex;gap:9px;margin-bottom:11px">
+                        <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                        <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;align-items:flex-end">
+                      <textarea rows="1" value="{{ b.a.draft }}" onchange="{{ b.a.onInput }}" onkeydown="{{ b.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                      <span onclick="{{ b.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- §3 Goals -->
+        <div style="border-bottom:1px solid #eef2f5;padding:20px 40px 12px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">03</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Goals</span></div>
+          <sc-for list="{{ goals }}" as="b" hint-placeholder-count="2">
+            <div style="padding-bottom:14px">
+              <div style="display:flex;gap:11px;font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3a4650">
+                <span style="flex:none;width:5px;height:5px;border-radius:50%;background:#c3ccd3;margin-top:8px"></span>
+                <span>{{ b.text }}</span>
+              </div>
+              <div style="padding-left:16px;margin-top:5px">
+                <span onclick="{{ b.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ b.a.commentLabel }}</span>
+                <sc-if value="{{ b.a.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:500px">
+                    <sc-for list="{{ b.a.comments }}" as="c" hint-placeholder-count="0">
+                      <div style="display:flex;gap:9px;margin-bottom:11px">
+                        <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                        <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;align-items:flex-end">
+                      <textarea rows="1" value="{{ b.a.draft }}" onchange="{{ b.a.onInput }}" onkeydown="{{ b.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                      <span onclick="{{ b.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- §4 Functional Requirements -->
+        <div style="border-bottom:1px solid #eef2f5;padding:20px 40px 8px">
+          <div style="margin-bottom:6px">
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">04</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Functional Requirements</span></div>
+            <div style="font:400 10.5px 'IBM Plex Mono',monospace;letter-spacing:.03em;color:#a7b3bd;margin-top:7px;padding-left:26px">Critic rubric · testable · unambiguous · atomic · scoped · traceable</div>
+          </div>
+
+          <sc-for list="{{ reqs }}" as="r" hint-placeholder-count="4">
+            <div style="{{ r.rowStyle }}">
+              <div style="display:flex;gap:11px;font:400 14px/1.6 'IBM Plex Sans',sans-serif;color:#1c2530">
+                <span style="flex:none;width:66px;font:600 11px 'IBM Plex Mono',monospace;color:#8b98a4;margin-top:1px">{{ r.ref }}</span>
+                <span>
+                  <sc-if value="{{ r.showMark }}" hint-placeholder-val="{{ true }}">{{ r.pre }}<span style="{{ r.markStyle }}">{{ r.mark }}</span>{{ r.post }}</sc-if>
+                  <sc-if value="{{ r.showPlain }}" hint-placeholder-val="{{ false }}">{{ r.text }}</sc-if>
+                </span>
+              </div>
+
+              <!-- flag content: always visible inline when flagged, no click needed -->
+              <sc-if value="{{ r.hasFlag }}" hint-placeholder-val="{{ false }}">
+                <div style="margin:10px 0 2px 78px;padding-left:14px;border-left:2px solid {{ r.accent }};max-width:560px">
+                  <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
+                    <span style="font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:{{ r.accent }}">{{ r.criterion }}</span>
+                    <span style="font:400 13px/1.55 'IBM Plex Sans',sans-serif;color:#5b6570">{{ r.reason }}</span>
+                  </div>
+                  <sc-if value="{{ r.hasRewrite }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:8px;font:400 13.5px/1.55 'IBM Plex Sans',sans-serif;color:#1c2530"><span style="font-weight:600;color:#2f7a63">Suggested — </span>{{ r.rewrite }}</div>
+                    <div style="display:flex;gap:10px;margin-top:9px">
+                      <span onclick="{{ r.accept }}" style="font:600 11px 'IBM Plex Mono',monospace;color:#2f7a63;background:#e2efe9;border:1px solid #b9ddce;padding:4px 10px;border-radius:4px;cursor:pointer" style-hover="background:#d5e9df">Accept rewrite</span>
+                      <span onclick="{{ r.decline }}" style="font:600 11px 'IBM Plex Mono',monospace;color:#5b6b78;background:#eef2f5;border:1px solid #cfd8df;padding:4px 10px;border-radius:4px;cursor:pointer" style-hover="background:#e4eaef">Decline</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ r.isJudgment }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:10px;margin-top:9px;flex-wrap:wrap">
+                      <span onclick="{{ r.acceptAsIs }}" style="font:600 11px 'IBM Plex Mono',monospace;color:#9a7420;background:#f4ead0;border:1px solid #e0cf9e;padding:4px 10px;border-radius:4px;cursor:pointer" style-hover="background:#efe0bd">Accept as-is anyway</span>
+                      <span onclick="{{ r.moveOut }}" style="font:600 11px 'IBM Plex Mono',monospace;color:#9a7420;background:#fff;border:1px solid #e0cf9e;padding:4px 10px;border-radius:4px;cursor:pointer" style-hover="background:#faf3e0">Move to Out of Scope</span>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <div style="padding-left:78px;margin-top:8px">
+                <span onclick="{{ r.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ r.a.commentLabel }}</span>
+                <sc-if value="{{ r.a.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:500px">
+                    <sc-for list="{{ r.a.comments }}" as="c" hint-placeholder-count="0">
+                      <div style="display:flex;gap:9px;margin-bottom:11px">
+                        <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                        <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;align-items:flex-end">
+                      <textarea rows="1" value="{{ r.a.draft }}" onchange="{{ r.a.onInput }}" onkeydown="{{ r.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                      <span onclick="{{ r.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- §5 Out of Scope -->
+        <div style="border-bottom:1px solid #eef2f5;padding:20px 40px 12px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">05</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Out of Scope</span></div>
+          <sc-for list="{{ scope }}" as="b" hint-placeholder-count="2">
+            <div style="padding-bottom:14px">
+              <div style="display:flex;gap:11px;font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3a4650">
+                <span style="flex:none;width:5px;height:5px;border-radius:50%;background:#c3ccd3;margin-top:8px"></span>
+                <span>{{ b.text }}</span>
+              </div>
+              <div style="padding-left:16px;margin-top:5px">
+                <span onclick="{{ b.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ b.a.commentLabel }}</span>
+                <sc-if value="{{ b.a.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:500px">
+                    <sc-for list="{{ b.a.comments }}" as="c" hint-placeholder-count="0">
+                      <div style="display:flex;gap:9px;margin-bottom:11px">
+                        <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                        <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;align-items:flex-end">
+                      <textarea rows="1" value="{{ b.a.draft }}" onchange="{{ b.a.onInput }}" onkeydown="{{ b.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                      <span onclick="{{ b.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- §6 Open Questions -->
+        <div style="padding:20px 40px 24px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font:600 11px 'IBM Plex Mono',monospace;color:#b3bec7">06</span><span style="font:600 15px 'Space Grotesk',sans-serif;color:#2a3742;letter-spacing:-.01em">Open Questions</span></div>
+          <sc-for list="{{ questions }}" as="b" hint-placeholder-count="2">
+            <div style="padding-bottom:14px">
+              <div style="display:flex;gap:11px;font:400 14px/1.55 'IBM Plex Sans',sans-serif;color:#3a4650">
+                <span style="flex:none;width:24px;font:600 12px 'IBM Plex Mono',monospace;color:#b3bec7">{{ b.ref }}</span>
+                <span>{{ b.text }}</span>
+              </div>
+              <div style="padding-left:16px;margin-top:5px">
+                <span onclick="{{ b.a.toggle }}" style="font:500 11.5px 'IBM Plex Sans',sans-serif;color:#9aa6b0;cursor:pointer" style-hover="color:#2f7a63">{{ b.a.commentLabel }}</span>
+                <sc-if value="{{ b.a.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:9px;background:#f7f9fb;border:1px solid #e4eaef;border-radius:7px;padding:11px 13px;max-width:500px">
+                    <sc-for list="{{ b.a.comments }}" as="c" hint-placeholder-count="0">
+                      <div style="display:flex;gap:9px;margin-bottom:11px">
+                        <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+                        <div><div style="font:600 11.5px 'IBM Plex Sans',sans-serif;color:#2a3742">{{ c.author }} <span style="font-weight:400;color:#a7b3bd;font-size:10.5px">{{ c.time }}</span></div><div style="font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#48555f">{{ c.text }}</div></div>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;gap:8px;align-items:flex-end">
+                      <textarea rows="1" value="{{ b.a.draft }}" onchange="{{ b.a.onInput }}" onkeydown="{{ b.a.onKey }}" placeholder="Add a comment…" style="flex:1;border:none;outline:none;resize:none;font:400 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent"></textarea>
+                      <span onclick="{{ b.a.onSubmit }}" style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:5px 10px;border-radius:5px;cursor:pointer">Post</span>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== RIGHT · PERSISTENT GENERAL CHAT ===== -->
+    <div style="flex:none;width:360px;border-left:1px solid #d3dce3;background:#f5f8fa;display:flex;flex-direction:column;min-height:0">
+      <div style="flex:none;padding:16px 18px;border-bottom:1px solid #e4eaef;background:#fbfcfd">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:26px;height:26px;border-radius:6px;background:#2f7a63;color:#fff;font:600 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">AI</div>
+          <div>
+            <div style="font:600 13px 'Space Grotesk',sans-serif;color:#1c2530">Draftsmith</div>
+            <div style="font:400 10.5px 'IBM Plex Mono',monospace;color:#9aa6b0">revising the whole plan</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;min-height:0;padding:16px 18px">
+        <sc-for list="{{ chat }}" as="m" hint-placeholder-count="2">
+          <div style="{{ m.rowStyle }}">
+            <sc-if value="{{ m.isAgent }}" hint-placeholder-val="{{ true }}"><div style="flex:none;width:24px;height:24px;border-radius:5px;background:#2f7a63;color:#fff;font:600 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center;margin-top:2px">AI</div></sc-if>
+            <div style="{{ m.bubbleStyle }}">{{ m.text }}</div>
+          </div>
+        </sc-for>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:7px">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="3">
+            <span onclick="{{ c.onClick }}" style="font:500 11px 'IBM Plex Sans',sans-serif;color:#3a4650;background:#fff;border:1px solid #dbe3e9;border-radius:14px;padding:6px 12px;cursor:pointer" style-hover="border-color:#2f7a63;color:#2f7a63">{{ c.label }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:none;padding:12px 14px;border-top:1px solid #e4eaef;background:#fbfcfd">
+        <div style="background:#fff;border:1px solid #dbe3e9;border-radius:8px;padding:8px 10px;display:flex;gap:8px;align-items:flex-end">
+          <textarea rows="1" value="{{ draftChat }}" onchange="{{ onChatInput }}" onkeydown="{{ onChatKey }}" placeholder="Ask, revise the plan, or add something missing…" style="flex:1;border:none;outline:none;resize:none;font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:#1c2530;background:transparent;max-height:120px"></textarea>
+          <span onclick="{{ sendChat }}" style="flex:none;font:600 11px 'IBM Plex Mono',monospace;color:#fff;background:#2f7a63;padding:7px 12px;border-radius:6px;cursor:pointer" style-hover="background:#276353">Send</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script="">
+class Component extends DCLogic {
+  state = {
+    annotateId: null,
+    draftAnnotate: '',
+    draftChat: '',
+    nextId: 300,
+    comments: {
+      p1: [ { author: 'Maya Chen', role: 'user', text: "Can we cite the 18% figure? Finance will ask where it's from.", time: '1d' } ]
+    },
+    chat: [
+      { role: 'agent', text: `I drafted this PRD from your notes on the receipt-capture idea. The critic flagged two requirements below — one needs a rewrite, one's a scope call. Anything you'd like me to revise?` }
+    ],
+    scope: [
+      { id: 's1', text: 'Mileage and per-diem expenses — kept in the legacy tool for this release.' },
+      { id: 's2', text: 'Multi-currency conversion at capture time.' }
+    ],
+    reqs: [
+      { id: 'r1', ref: 'REQ-011', text: 'Users can capture a receipt via camera or upload; vendor, date, and total are extracted into editable fields.', mark: '', flag: null },
+      { id: 'r2', ref: 'REQ-013', text: 'Receipt processing should feel ', mark: 'fast and responsive', post: '.',
+        flag: { severity: 'defect', criterion: 'Testable',
+          reason: 'Not testable — there is no pass/fail condition. "Fast" and "responsive" can\u2019t be verified by QA.',
+          rewrite: '95% of receipts finish extraction within 3 seconds (p95 \u2264 3s), measured from upload to fields populated.' } },
+      { id: 'r3', ref: 'REQ-014', text: 'When OCR field confidence is below 80%, the user is prompted to confirm the value before saving.', mark: '', flag: null },
+      { id: 'r4', ref: 'REQ-018', text: 'The scanner also detects and categorizes ', mark: 'business-card contacts', post: ' from the same photo.',
+        flag: { severity: 'judgment', criterion: 'Scoped',
+          reason: 'Possible scope creep — contact scanning sits outside receipt capture. It isn\u2019t broken, just a judgment call for this release.',
+          rewrite: null } }
+    ]
+  };
+
+  initialsFor(author) {
+    if (author === 'You') return 'You';
+    if (author === 'Draftsmith') return 'AI';
+    return author.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+  avatarStyleFor(role, author) {
+    const base = `flex:none;width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font:600 9px 'IBM Plex Mono',monospace;margin-top:1px;`;
+    if (role === 'agent') return base + 'background:#2f7a63;color:#fff';
+    if (author === 'You') return base + 'background:#dbe3e9;color:#48555f';
+    return base + 'background:#5b6b78;color:#fff';
+  }
+
+  toggleAnnotate(id) {
+    this.setState(s => s.annotateId === id ? { annotateId: null, draftAnnotate: '' } : { annotateId: id, draftAnnotate: '' });
+  }
+  onAnnotateInput(e) { this.setState({ draftAnnotate: e.target.value }); }
+  onAnnotateKey(id, e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.submitAnnotate(id); } }
+  submitAnnotate(id) {
+    const t = (this.state.draftAnnotate || '').trim();
+    if (!t) return;
+    this.setState(s => ({ draftAnnotate: '', comments: { ...s.comments, [id]: [...(s.comments[id] || []), { author: 'You', role: 'user', text: t, time: 'now' }] } }));
+    setTimeout(() => {
+      this.setState(s => ({ comments: { ...s.comments, [id]: [...(s.comments[id] || []), { author: 'Draftsmith', role: 'agent', text: `Noted — I'll fold that into the next revision of this item.`, time: 'now' }] } }));
+    }, 700);
+  }
+
+  annot(id) {
+    const open = this.state.annotateId === id;
+    const list = this.state.comments[id] || [];
+    return {
+      open,
+      commentLabel: list.length > 0 ? (list.length === 1 ? '1 comment' : list.length + ' comments') : 'Comment',
+      comments: list.map(c => ({ ...c, initials: this.initialsFor(c.author), avatarStyle: this.avatarStyleFor(c.role, c.author) })),
+      draft: open ? this.state.draftAnnotate : '',
+      toggle: () => this.toggleAnnotate(id),
+      onInput: e => this.onAnnotateInput(e),
+      onKey: e => this.onAnnotateKey(id, e),
+      onSubmit: () => this.submitAnnotate(id)
+    };
+  }
+
+  _updateReq(id, fn) { this.setState(s => ({ reqs: s.reqs.map(r => r.id === id ? fn(r) : r) })); }
+
+  accept(id) { this._updateReq(id, r => ({ ...r, text: r.flag.rewrite, mark: '', post: '', flag: null })); }
+  decline(id) { this._updateReq(id, r => ({ ...r, flag: null })); }
+  acceptAsIs(id) { this._updateReq(id, r => ({ ...r, flag: null })); }
+  moveOut(id) {
+    const r = this.state.reqs.find(x => x.id === id);
+    const text = (r.text || '') + (r.mark || '') + (r.post || '');
+    this.setState(s => ({ reqs: s.reqs.filter(x => x.id !== id), scope: [...s.scope, { id: 's' + s.nextId, text }], nextId: s.nextId + 1 }));
+  }
+
+  onChatInput(e) { this.setState({ draftChat: e.target.value }); }
+  onChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendChat(); } }
+  sendChat(text) {
+    const t = (typeof text === 'string' ? text : this.state.draftChat || '').trim();
+    if (!t) return;
+    this.setState(s => ({ draftChat: '', chat: [...s.chat, { role: 'user', text: t }] }));
+    setTimeout(() => this._agentReply(t), 700);
+  }
+  _agentReply(t) {
+    const low = t.toLowerCase();
+    let reply, added = null;
+    if (/missing|forgot|forget|overlook|else|complete|cover/.test(low)) {
+      added = { ref: 'REQ-016', text: 'The system detects and warns when a receipt appears to be a duplicate of one already submitted.' };
+      reply = `Good catch — expense flows usually need duplicate detection. I added it as REQ-016 under Functional Requirements. Want me to define the matching rule?`;
+    } else if (/security|privacy|encrypt|access|compliance|pii/.test(low)) {
+      added = { ref: 'REQ-017', text: 'Receipt images are encrypted at rest; access is limited to the submitter and finance reviewers.' };
+      reply = `Added a security requirement (REQ-017). We should confirm the retention window with your compliance team.`;
+    } else if (/problem|tighten|shorter|concise|trim/.test(low)) {
+      reply = `Here's a tighter problem statement: "Manual receipt entry is slow, and finance rejects ~18% of reports for bad data. We want automatic field extraction with a quick confirm step." Say the word and I'll apply it to §1.`;
+    } else if (/offline|connection|network/.test(low)) {
+      reply = `That's currently an open question (§6). If offline capture matters, I can promote it to a requirement — just ask.`;
+    } else {
+      reply = `Noted. I can turn that into a requirement, add it to open questions, or keep it as context — which would you like?`;
+    }
+    this.setState(s => {
+      let reqs = s.reqs, nextId = s.nextId;
+      if (added) {
+        const id = 'r' + nextId; nextId++;
+        reqs = [...reqs, { id, ref: added.ref, text: added.text, mark: '', flag: null }];
+      }
+      return { chat: [...s.chat, { role: 'agent', text: reply }], reqs, nextId };
+    });
+  }
+
+  renderVals() {
+    const flaggedCount = this.state.reqs.filter(r => r.flag).length;
+
+    const reqs = this.state.reqs.map(r => {
+      const flagged = !!r.flag;
+      const defect = flagged && r.flag.severity === 'defect';
+      const judgment = flagged && r.flag.severity === 'judgment';
+      const accent = defect ? '#c0562f' : '#9a7420';
+      return {
+        id: r.id,
+        ref: r.ref,
+        showMark: !!r.mark,
+        showPlain: !r.mark,
+        pre: r.text, mark: r.mark, post: r.post || '',
+        text: r.text,
+        markStyle: `border-bottom:2px dotted ${defect ? '#d98a63' : '#cbab5e'};padding-bottom:1px`,
+        rowStyle: `padding:14px 0;border-bottom:1px solid #eef2f5`,
+        hasFlag: flagged,
+        accent,
+        criterion: flagged ? r.flag.criterion : '',
+        reason: flagged ? r.flag.reason : '',
+        hasRewrite: defect,
+        isJudgment: judgment,
+        rewrite: flagged && r.flag.rewrite ? r.flag.rewrite : '',
+        accept: () => this.accept(r.id),
+        decline: () => this.decline(r.id),
+        acceptAsIs: () => this.acceptAsIs(r.id),
+        moveOut: () => this.moveOut(r.id),
+        a: this.annot(r.id)
+      };
+    });
+
+    const problem = {
+      text: `Employees expense dozens of receipts a month, keying in vendor, date, and amount by hand. Manual entry is slow, and finance rejects roughly 18% of submissions for missing or mismatched data. We want people to capture a receipt and have the key fields filled automatically, with a quick confirmation step.`,
+      a: this.annot('p1')
+    };
+    const personas = [
+      { text: 'Field employees submitting expenses from their phone, often between sites.', a: this.annot('u1') },
+      { text: 'Finance reviewers who approve or reject reports against policy.', a: this.annot('u2') },
+      { text: 'Team admins who configure categories, limits, and approval routing.', a: this.annot('u3') }
+    ];
+    const goals = [
+      { text: `Cut the average time to file one expense from minutes to seconds.`, a: this.annot('g1') },
+      { text: `Bring finance's rejection rate for bad data below 5%.`, a: this.annot('g2') }
+    ];
+    const scope = this.state.scope.map(s => ({ text: s.text, a: this.annot(s.id) }));
+    const questions = [
+      { ref: 'Q1', text: 'When a receipt has multiple line items, is that one expense or several?', a: this.annot('q1') },
+      { ref: 'Q2', text: 'Do we need offline capture, or can we assume a connection at submit time?', a: this.annot('q2') }
+    ];
+
+    const chat = this.state.chat.map(m => {
+      const isAgent = m.role === 'agent';
+      return {
+        text: m.text, isAgent,
+        rowStyle: `display:flex;gap:9px;align-items:flex-start;margin-bottom:16px;${isAgent ? '' : 'justify-content:flex-end'}`,
+        bubbleStyle: isAgent
+          ? `background:#fff;border:1px solid #e4eaef;border-radius:3px 11px 11px 11px;padding:10px 13px;font:400 13px/1.55 'IBM Plex Sans',sans-serif;color:#3a4650;max-width:255px`
+          : `background:#2a3742;border-radius:11px 3px 11px 11px;padding:10px 13px;font:400 13px/1.55 'IBM Plex Sans',sans-serif;color:#e8eef2;max-width:255px`
+      };
+    });
+    const chips = [
+      { label: 'What am I missing?', onClick: () => this.sendChat('What am I missing?') },
+      { label: 'Add a security requirement', onClick: () => this.sendChat('Add a security requirement') },
+      { label: 'Tighten the problem statement', onClick: () => this.sendChat('Tighten the problem statement') }
+    ];
+
+    return {
+      flagSummary: flaggedCount === 0 ? 'No open flags' : (flaggedCount === 1 ? '1 flag open' : flaggedCount + ' flags open'),
+      reqs, problem, personas, goals, scope, questions,
+      chat, chips,
+      draftChat: this.state.draftChat,
+      onChatInput: e => this.onChatInput(e),
+      onChatKey: e => this.onChatKey(e),
+      sendChat: () => this.sendChat()
+    };
+  }
+}
+</script>
+
+
+</body></html>
