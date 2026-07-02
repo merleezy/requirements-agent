@@ -6,10 +6,20 @@ import {
   parseClarifyOutput,
 } from "../agents/clarify.ts";
 import {
+  buildCriticUserMessage,
+  criticPrompt,
+  parseCriticOutput,
+} from "../agents/critic.ts";
+import {
   buildDraftUserMessage,
   draftPrompt,
   parseDraftOutput,
 } from "../agents/draft.ts";
+import {
+  buildReviseLocalUserMessage,
+  reviseLocalPrompt,
+  parseReviseLocalOutput,
+} from "../agents/reviseLocal.ts";
 
 /*
  * The one function that talks to OpenRouter (spec: "No LLM call is ever
@@ -35,8 +45,9 @@ interface AgentDefinition<I, O> {
   parseOutput: (raw: unknown) => O;
 }
 
-/* Stage registry. Critic/revise agents join here as their build-order
- * steps land (7, 9). */
+/* Stage registry. revise_global joins here at the whole-document feedback
+ * step (spec pipeline stage 5), pulled forward from the original step-9
+ * plan only for revise_local (see CLAUDE.md "Current stage"). */
 const agents = {
   clarify: {
     prompt: clarifyPrompt,
@@ -47,6 +58,16 @@ const agents = {
     prompt: draftPrompt,
     buildUserMessage: buildDraftUserMessage,
     parseOutput: parseDraftOutput,
+  },
+  critic: {
+    prompt: criticPrompt,
+    buildUserMessage: buildCriticUserMessage,
+    parseOutput: parseCriticOutput,
+  },
+  revise_local: {
+    prompt: reviseLocalPrompt,
+    buildUserMessage: buildReviseLocalUserMessage,
+    parseOutput: parseReviseLocalOutput,
   },
 } as const;
 

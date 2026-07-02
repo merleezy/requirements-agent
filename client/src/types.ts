@@ -31,6 +31,7 @@ export interface Requirement {
   flag: CriticFlag | null;
   /* Substring of text the flag refers to; rendered with a dotted underline. */
   highlight: string | null;
+  acceptedAsIs?: boolean;
 }
 
 /* A commentable non-requirement item (persona, goal, scope note, question). */

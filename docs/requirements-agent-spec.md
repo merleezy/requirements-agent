@@ -83,7 +83,10 @@ The **model tiering is a deliberate design feature**, not an afterthought — it
 
 **Why clarify doesn't make the critic redundant:** clarify reduces ambiguity in the *input*, before any requirements exist. The draft agent inevitably introduces new unstated assumptions in the act of writing structured requirements (e.g. inferring "nested folders" when only "folders" was mentioned) — ambiguity clarify structurally cannot reach because it doesn't exist yet at that stage. Critic is the safety net for exactly that gap.
 
-**Both loops (local and global) end the same way:** any requirement they touch gets auto re-run through the critic. This mirrors the export gate below — nothing should be able to slip into a "resolved" PRD without passing through the critic at least once after its most recent change.
+**Both loops (local and global) end the same way:** any requirement they touch gets auto re-run through the critic.
+To ensure responsiveness, local revisions apply immediately to client state and trigger the critic check asynchronously in the background.
+Requirements confirmed as-is store `acceptedAsIs = true`, persisting user intent and bypassing redundant LLM calls on subsequent critic passes.
+This mirrors the export gate below - nothing should be able to slip into a "resolved" PRD without passing through the critic at least once after its most recent text change.
 
 ---
 

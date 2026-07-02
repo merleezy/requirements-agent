@@ -6,7 +6,9 @@ import express, {
 import { HttpError } from "./errors.ts";
 import { SessionStore } from "./session/store.ts";
 import { clarifyRouter } from "./routes/clarify.ts";
+import { criticRouter } from "./routes/critic.ts";
 import { draftRouter } from "./routes/draft.ts";
+import { reviseLocalRouter } from "./routes/reviseLocal.ts";
 import { sessionRouter } from "./routes/session.ts";
 
 export function createApp(store: SessionStore = new SessionStore()) {
@@ -20,6 +22,8 @@ export function createApp(store: SessionStore = new SessionStore()) {
   app.use("/api/session", sessionRouter(store));
   app.use("/api/clarify", clarifyRouter(store));
   app.use("/api/draft", draftRouter(store));
+  app.use("/api/critic", criticRouter(store));
+  app.use("/api/revise-local", reviseLocalRouter(store));
 
   /* Unknown /api paths get the same JSON error shape as everything else. */
   app.use("/api", (_req: Request, res: Response) => {

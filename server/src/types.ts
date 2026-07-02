@@ -61,6 +61,7 @@ export interface Requirement {
   section: "functionalRequirements";
   status: RequirementStatus;
   flag: CriticFlag | null;
+  acceptedAsIs?: boolean;
 }
 
 export interface PRD {

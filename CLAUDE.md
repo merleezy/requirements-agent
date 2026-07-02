@@ -132,7 +132,18 @@ Decisions made so far, flagged per the rule above:
 - Round 2 runs automatically when round-1 answers are submitted (one extra cheap-model call); if it returns no questions the draft starts immediately, so the user never sees an empty screen.
 - `parseClarifyOutput` truncates past the prompt's 8-question ceiling instead of failing the call - a model that overshoots produces a degraded result, not an error.
 
-Next: build-order step 7 - critic agent + inline flags.
+- Build-order step 7 (critic agent + inline flags) landed.
+- `criticPrompt` and output parser check requirements against the 5 rubric dimensions.
+- `POST /api/critic` runs the critic agent over PRD requirements with concurrency limiting.
+- Local revision calls (`POST /api/revise-local`) apply requirement edits immediately without inline critic delays.
+- The client triggers background critic checks asynchronously after revisions to avoid blocking the UI.
+- Optimistic UI updates apply rewrite and judgment resolutions instantly to the document state.
+- Requirements confirmed as-is store `acceptedAsIs = true`, bypassing redundant LLM calls on subsequent critic passes.
+- System prompts for local revisions explicitly enforce spacing and word preservation.
+- Document actions send user-role chat messages (`role: "user"`) rendered in dark user chat bubbles on the right of the chat panel.
+- A prominent animated Reviewing Banner displays above the PRD document when the critic agent is actively reviewing requirements.
+
+Next: build-order step 8 - settings page (per-stage model dropdowns + presets).
 
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.

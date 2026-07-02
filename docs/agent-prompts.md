@@ -228,6 +228,8 @@ If the flag proposed splitting the requirement and the user agreed, put each
 resulting requirement on its own line in revisedText (plain lines, no numbering
 or bullets).
 
+Ensure that you preserve the exact spelling, capitalization, and spacing of the original requirement text, except for the parts you are intentionally correcting to resolve the flag. Do not concatenate words or strip necessary spaces.
+
 Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
   "requirementId": string,
@@ -312,3 +314,7 @@ self-check them.
   Reasoning for not removing the cap entirely: an unbounded clarifier risks turning the Q&A step into an interrogation, which hurts the exact "quick to get going" UX the product wants.
   Reasoning for not leaving it at a flat cap: a single line like "an app that checks the weather" has enough real scope decisions (platform, single vs. multi-location, current conditions vs. forecast, alerts, offline behavior, new-vs-existing) to run past 5 without any padding.
   The guidance also makes explicit what was previously only implicit: unasked ambiguity isn't silently lost, because the draft agent already must avoid inventing unstated specifics and must surface anything unresolved in `openQuestions`, and the critic re-checks every requirement afterward - clarify only needs to resolve what a few sharp questions can, not every ambiguity in the pipeline.
+
+2026-07-02 - third pass, made during critic pipeline optimization and approved by Isaac:
+
+- Revise (local): added explicit instruction to preserve exact spelling, capitalization, and spacing of the original requirement text unless intentionally correcting it, preventing models from returning squished text (e.g. 'therequirement').

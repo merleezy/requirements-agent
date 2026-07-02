@@ -1,6 +1,7 @@
-import type { PRD, Requirement } from "../types";
+import type { PRD } from "../types";
 import { api } from "./api";
 import type { ClarificationPair } from "./clarify";
+import { toClientOutOfScope, toClientRequirements, type ServerRequirement } from "./prdMapping";
 import { bootstrapSession } from "./session";
 
 /*
@@ -11,13 +12,6 @@ import { bootstrapSession } from "./session";
  * they are commentable. When annotations sync to the server (step 9), these
  * ids must be re-derivable there - hence position-based, not random.
  */
-
-interface ServerRequirement {
-  id: string;
-  text: string;
-  status: Requirement["status"];
-  flag: Requirement["flag"];
-}
 
 interface ServerPrd {
   summary: string;
@@ -67,15 +61,8 @@ function toClientPrd(state: DraftResponse): PRD {
     problemStatement: { id: "ps", text: prd.problemStatement },
     targetUsers: prd.targetUsers.map((text, i) => ({ id: `tu-${i + 1}`, text })),
     goals: prd.goals.map((text, i) => ({ id: `g-${i + 1}`, text })),
-    functionalRequirements: prd.functionalRequirements.map((r, i) => ({
-      id: r.id,
-      ref: `REQ-${String(i + 1).padStart(3, "0")}`,
-      text: r.text,
-      status: r.status,
-      flag: r.flag,
-      highlight: null,
-    })),
-    outOfScope: prd.outOfScope.map((text, i) => ({ id: `oos-${i + 1}`, text })),
+    functionalRequirements: toClientRequirements(prd.functionalRequirements),
+    outOfScope: toClientOutOfScope(prd.outOfScope),
     openQuestions: prd.openQuestions.map((text, i) => ({ id: `oq-${i + 1}`, text })),
   };
 }
