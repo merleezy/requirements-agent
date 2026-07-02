@@ -30,7 +30,12 @@ import { sendGlobalFeedback } from "./state/reviseGlobal";
 import { runFinalReview } from "./state/finalReview";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD, PrdItem, Requirement } from "./types";
-import { FinalReviewModal, type FinalReviewResult } from "./components/FinalReviewModal";
+import {
+  FinalReviewModal,
+  type FinalReviewIssue,
+  type FinalReviewResult,
+} from "./components/FinalReviewModal";
+import { ExportOptionsModal } from "./components/ExportOptionsModal";
 import { downloadPrdAsMarkdown } from "./util/exportPrd";
 
 export const MAX_AUTO_REVIEW_CYCLES = 1;
@@ -278,15 +283,34 @@ export default function App() {
   const [chatBusy, setChatBusy] = useState(false);
 
   /* Final Review modal state & workflow */
+  const [exportOptionsModalOpen, setExportOptionsModalOpen] = useState(false);
   const [finalReviewModalOpen, setFinalReviewModalOpen] = useState(false);
   const [finalReviewEvaluating, setFinalReviewEvaluating] = useState(false);
   const [finalReviewResult, setFinalReviewResult] = useState<FinalReviewResult | null>(null);
-  const [autoCycleCount, setAutoCycleCount] = useState(0);
+  const [appliedIssueIds, setAppliedIssueIds] = useState<Set<string>>(new Set());
+  const [revisingIssueId, setRevisingIssueId] = useState<string | null>(null);
+  const activeAbortControllerRef = useRef<AbortController | null>(null);
+
+  const handleStopActiveProcess = () => {
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+      activeAbortControllerRef.current = null;
+    }
+    setFinalReviewEvaluating(false);
+    setRevisingIssueId(null);
+    setChatBusy(false);
+  };
 
   const executeFinalReviewPass = async () => {
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
     setFinalReviewEvaluating(true);
     try {
-      const result = await runFinalReview(apiKey);
+      const result = await runFinalReview(apiKey, controller.signal);
       setFinalReviewEvaluating(false);
       setFinalReviewResult(result);
 
@@ -305,45 +329,82 @@ export default function App() {
       }
     } catch (err) {
       setFinalReviewEvaluating(false);
+      if (err instanceof Error && err.name === "AbortError") {
+        dispatch({ type: "agentChat", text: "Final review cancelled by user." });
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       dispatch({ type: "agentChat", text: `Final review failed (${message}).` });
+    } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
     }
   };
 
   const handleExportClick = () => {
     if (!state.prd) return;
-    setAutoCycleCount(0);
+    setExportOptionsModalOpen(true);
+  };
+
+  const handleViewSavedReview = () => {
+    setExportOptionsModalOpen(false);
+    setFinalReviewModalOpen(true);
+  };
+
+  const handleConfirmRunReview = () => {
+    setExportOptionsModalOpen(false);
+    setAppliedIssueIds(new Set());
+    setRevisingIssueId(null);
     setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
     setFinalReviewModalOpen(true);
     void executeFinalReviewPass();
   };
 
-  const handleApplyAiFixes = async () => {
-    if (!finalReviewResult || !state.prd) return;
-    const issues = finalReviewResult.issues;
-    if (issues.length === 0) return;
-
-    const issuesFormatted = issues
-      .map((i) => `- [${i.id} - ${i.severity}] ${i.explanation} Recommendation: ${i.recommendation}`)
-      .join("\n");
-
-    const instruction =
-      `Treat the current PRD as the canonical document. Preserve all existing content unless a review finding explicitly requires modifying it. ` +
-      `Apply ONLY modifications directly related to the final review findings:\n${issuesFormatted}`;
-
-    dispatch({ type: "sendChat", text: "Apply AI fixes for Final Review findings" });
-    dispatch({ type: "agentChat", text: "Revising PRD based on Final Review findings…" });
-
-    const newCycleCount = autoCycleCount + 1;
-    setAutoCycleCount(newCycleCount);
+  const handleReRunReview = () => {
+    setAppliedIssueIds(new Set());
+    setRevisingIssueId(null);
+    setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
+    void executeFinalReviewPass();
+  };
+
+  const handleExportImmediately = () => {
+    setExportOptionsModalOpen(false);
+    if (state.prd) {
+      downloadPrdAsMarkdown(state.prd);
+    }
+  };
+
+  const handleApplySingleAiFix = async (issue: FinalReviewIssue) => {
+    if (!state.prd) return;
+
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
+    setRevisingIssueId(issue.id);
+    const instruction =
+      `Treat the current PRD as the canonical document. Preserve all existing content unless this review finding explicitly requires modifying it:\n` +
+      `- [${issue.id} - ${issue.severity}] ${issue.explanation} Recommendation: ${issue.recommendation}`;
+
+    dispatch({ type: "sendChat", text: `Apply AI fix for ${issue.id}` });
+    dispatch({ type: "agentChat", text: `Revising PRD for ${issue.id}…` });
 
     setChatBusy(true);
     try {
-      const { prd, summary, recheckIds } = await sendGlobalFeedback(instruction, undefined, apiKey);
+      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+        instruction,
+        undefined,
+        apiKey,
+        controller.signal,
+      );
       dispatch({ type: "applyGlobalRevision", prd });
       dispatch({ type: "agentChat", text: summary });
+      setAppliedIssueIds((s) => new Set(s).add(issue.id));
 
       if (recheckIds.length > 0) {
         const textMap = new Map(
@@ -353,15 +414,82 @@ export default function App() {
         );
         void runBackgroundCritic(recheckIds, textMap);
       }
-
-      /* Re-run final review pass for the new cycle */
-      void executeFinalReviewPass();
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        dispatch({ type: "agentChat", text: `AI revision for ${issue.id} cancelled.` });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      dispatch({ type: "agentChat", text: `Couldn't apply AI fix for ${issue.id} (${message}).` });
+    } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
+      setChatBusy(false);
+      setRevisingIssueId(null);
+    }
+  };
+
+  const handleApplyAllAiFixes = async () => {
+    if (!finalReviewResult || !state.prd) return;
+    const unapplied = finalReviewResult.issues.filter((i) => !appliedIssueIds.has(i.id));
+    if (unapplied.length === 0) return;
+
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
+    setRevisingIssueId("ALL");
+    const issuesFormatted = unapplied
+      .map((i) => `- [${i.id} - ${i.severity}] ${i.explanation} Recommendation: ${i.recommendation}`)
+      .join("\n");
+
+    const instruction =
+      `Treat the current PRD as the canonical document. Preserve all existing content unless a review finding explicitly requires modifying it. ` +
+      `Apply ONLY modifications directly related to the final review findings:\n${issuesFormatted}`;
+
+    dispatch({ type: "sendChat", text: "Apply AI fixes for all remaining Final Review findings" });
+    dispatch({ type: "agentChat", text: "Revising PRD for all remaining findings…" });
+
+    setChatBusy(true);
+    try {
+      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+        instruction,
+        undefined,
+        apiKey,
+        controller.signal,
+      );
+      dispatch({ type: "applyGlobalRevision", prd });
+      dispatch({ type: "agentChat", text: summary });
+      setAppliedIssueIds((s) => {
+        const next = new Set(s);
+        unapplied.forEach((i) => next.add(i.id));
+        return next;
+      });
+
+      if (recheckIds.length > 0) {
+        const textMap = new Map(
+          prd.functionalRequirements
+            .filter((r) => recheckIds.includes(r.id))
+            .map((r) => [r.id, r.text]),
+        );
+        void runBackgroundCritic(recheckIds, textMap);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        dispatch({ type: "agentChat", text: "AI revision cancelled." });
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       dispatch({ type: "agentChat", text: `Couldn't apply AI fixes (${message}).` });
-      setFinalReviewEvaluating(false);
     } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
       setChatBusy(false);
+      setRevisingIssueId(null);
     }
   };
 
@@ -764,13 +892,26 @@ export default function App() {
             />
           </div>
 
+          {exportOptionsModalOpen && (
+            <ExportOptionsModal
+              hasSavedReview={finalReviewResult !== null}
+              onViewSavedReview={handleViewSavedReview}
+              onRunReviewAndExport={handleConfirmRunReview}
+              onExportImmediately={handleExportImmediately}
+              onClose={() => setExportOptionsModalOpen(false)}
+            />
+          )}
+
           {finalReviewModalOpen && (
             <FinalReviewModal
               evaluating={finalReviewEvaluating}
               result={finalReviewResult}
-              autoCycleCount={autoCycleCount}
-              maxAutoCycles={MAX_AUTO_REVIEW_CYCLES}
-              onApplyAiFixes={handleApplyAiFixes}
+              appliedIssueIds={appliedIssueIds}
+              revisingIssueId={revisingIssueId}
+              onApplyAllAiFixes={handleApplyAllAiFixes}
+              onApplySingleAiFix={handleApplySingleAiFix}
+              onReRunReview={handleReRunReview}
+              onStopActiveProcess={handleStopActiveProcess}
               onExportAnyway={handleExportAnyway}
               onCancel={() => setFinalReviewModalOpen(false)}
             />

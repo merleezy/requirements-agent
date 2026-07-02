@@ -23,6 +23,7 @@ interface ApiOptions {
    * server-side. */
   apiKey?: string;
   body?: unknown;
+  signal?: AbortSignal;
 }
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
@@ -35,6 +36,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
     method: options.method ?? "GET",
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    signal: options.signal,
   });
 
   const data = await res.json().catch(() => null);

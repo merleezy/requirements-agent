@@ -42,6 +42,7 @@ export async function sendGlobalFeedback(
   feedback: string,
   targetId: string | undefined,
   apiKey: string,
+  signal?: AbortSignal,
 ): Promise<ReviseGlobalResult> {
   const { sessionId } = await bootstrapSession();
   const res = await api<ReviseGlobalResponse>("/revise-global", {
@@ -49,6 +50,7 @@ export async function sendGlobalFeedback(
     sessionId,
     apiKey,
     body: targetId === undefined ? { feedback } : { feedback, targetId },
+    signal,
   });
   return {
     prd: toClientPrd(res.state.project, res.state.prd),

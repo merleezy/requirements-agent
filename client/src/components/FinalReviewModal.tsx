@@ -18,9 +18,12 @@ export interface FinalReviewResult {
 export interface FinalReviewModalProps {
   evaluating: boolean;
   result: FinalReviewResult | null;
-  autoCycleCount: number;
-  maxAutoCycles: number;
-  onApplyAiFixes: () => void;
+  appliedIssueIds: Set<string>;
+  revisingIssueId: string | null;
+  onApplyAllAiFixes: () => void;
+  onApplySingleAiFix: (issue: FinalReviewIssue) => void;
+  onReRunReview: () => void;
+  onStopActiveProcess: () => void;
   onExportAnyway: () => void;
   onCancel: () => void;
 }
@@ -28,23 +31,30 @@ export interface FinalReviewModalProps {
 export function FinalReviewModal({
   evaluating,
   result,
-  autoCycleCount,
-  maxAutoCycles,
-  onApplyAiFixes,
+  appliedIssueIds,
+  revisingIssueId,
+  onApplyAllAiFixes,
+  onApplySingleAiFix,
+  onReRunReview,
+  onStopActiveProcess,
   onExportAnyway,
   onCancel,
 }: FinalReviewModalProps) {
-  const canApplyAiFixes = autoCycleCount < maxAutoCycles;
+  const issues = result?.issues ?? [];
+  const unappliedIssues = issues.filter((i) => !appliedIssueIds.has(i.id));
+  const appliedIssues = issues.filter((i) => appliedIssueIds.has(i.id));
+
+  const isRevising = revisingIssueId !== null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/40 p-4 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-[640px] max-h-[85vh] flex flex-col rounded-xl border border-line-400 bg-white p-6 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-xl border border-line-400 bg-white p-6 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-line-200 pb-4">
           <div className="flex items-center gap-3">
-            {evaluating ? (
+            {evaluating || isRevising ? (
               <span className="flex h-3 w-3 rounded-full bg-accent animate-ping" />
-            ) : result?.status === "PASS" ? (
+            ) : result?.status === "PASS" || unappliedIssues.length === 0 ? (
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-tint text-accent font-bold text-sm">
                 ✓
               </div>
@@ -57,48 +67,155 @@ export function FinalReviewModal({
               <h3 className="font-display text-[17px] font-semibold text-ink-950">
                 {evaluating
                   ? "Lead Engineer Reviewing PRD…"
-                  : result?.status === "PASS"
-                    ? "Final Review Passed"
-                    : "Final Review Findings"}
+                  : isRevising
+                    ? "Applying AI Fixes…"
+                    : unappliedIssues.length === 0 && appliedIssues.length > 0
+                      ? "AI Fixes Applied"
+                      : result?.status === "PASS"
+                        ? "Final Review Passed"
+                        : "Final Review Findings"}
               </h3>
               <p className="text-[12.5px] text-ink-500">
                 {evaluating
                   ? "Evaluating implementation completeness, edge cases, and technical risks before export."
-                  : result?.status === "PASS"
-                    ? "No significant implementation issues were found."
-                    : `${result?.issues.length ?? 0} implementation risk${(result?.issues.length ?? 0) === 1 ? "" : "s"} identified.`}
+                  : isRevising
+                    ? `Updating PRD document to address ${revisingIssueId === "ALL" ? "all remaining findings" : revisingIssueId}…`
+                    : unappliedIssues.length === 0 && appliedIssues.length > 0
+                      ? `Successfully applied ${appliedIssues.length} fix${appliedIssues.length === 1 ? "" : "es"} to your PRD.`
+                      : result?.status === "PASS"
+                        ? "No significant implementation issues were found."
+                        : `${unappliedIssues.length} open finding${unappliedIssues.length === 1 ? "" : "s"} (${appliedIssues.length} applied).`}
               </p>
             </div>
           </div>
 
-          {!evaluating && (
-            <button
-              onClick={onCancel}
-              className="cursor-pointer text-xs font-bold text-ink-400 hover:text-ink-950"
-            >
-              ✕
-            </button>
+          {!evaluating && !isRevising ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onReRunReview}
+                title="Re-evaluate document with the review agent"
+                className="cursor-pointer text-xs font-mono font-medium text-accent hover:underline px-2.5 py-1 rounded border border-accent/30 bg-accent-tint/30"
+              >
+                ↻ Re-run Review
+              </button>
+              <button
+                onClick={onCancel}
+                className="cursor-pointer text-xs font-bold text-ink-400 hover:text-ink-950 p-1"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <Button variant="neutral" onClick={onStopActiveProcess}>
+              Stop Request
+            </Button>
           )}
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-auto py-4">
+        <div className="flex-1 overflow-auto py-4 space-y-4">
           {evaluating ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent mb-4" />
-              <p className="text-[14px] font-medium text-ink-800">
-                Simulating senior software engineer review…
-              </p>
-              <p className="mt-1 text-[12.5px] text-ink-400">
-                Checking for missing edge cases, undefined behavior, and ambiguous requirements.
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <div>
+                <p className="text-[14px] font-medium text-ink-800">
+                  Simulating senior software engineer review…
+                </p>
+                <p className="mt-1 text-[12.5px] text-ink-400">
+                  Checking for missing edge cases, undefined behavior, and ambiguous requirements.
+                </p>
+              </div>
+              <Button variant="neutral" onClick={onStopActiveProcess}>
+                Cancel Review
+              </Button>
+            </div>
+          ) : isRevising ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <div>
+                <p className="text-[14px] font-medium text-ink-800">
+                  Revising PRD document with AI…
+                </p>
+                <p className="mt-1 text-[12.5px] text-ink-400">
+                  {revisingIssueId === "ALL"
+                    ? "Modifying sections to address all selected review findings."
+                    : `Modifying section to address ${revisingIssueId}.`}
+                </p>
+              </div>
+              <Button variant="neutral" onClick={onStopActiveProcess}>
+                Cancel AI Revision
+              </Button>
+            </div>
+          ) : unappliedIssues.length === 0 && appliedIssues.length > 0 ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-accent-line bg-accent-tint p-4 text-[13.5px] text-accent-strong space-y-2">
+                <p className="font-semibold text-[14px]">
+                  ✓ All {appliedIssues.length} review findings have been applied to your document!
+                </p>
+                <p className="text-[12.5px] opacity-90 leading-normal">
+                  Your PRD has been updated. You can now re-run the review agent to verify your revised document or export it immediately.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={onReRunReview}
+                  className="flex-1 p-3.5 rounded-lg border border-accent/30 bg-accent-tint/40 hover:bg-accent-tint/80 text-left cursor-pointer transition-colors"
+                >
+                  <div className="font-semibold text-[13.5px] text-accent-strong mb-1">
+                    ↻ Re-run Review to Verify
+                  </div>
+                  <div className="text-[12px] text-ink-600">
+                    Runs a fresh pass on the updated document to confirm all risks are resolved.
+                  </div>
+                </button>
+
+                <button
+                  onClick={onExportAnyway}
+                  className="flex-1 p-3.5 rounded-lg border border-line-300 bg-paper-tint hover:bg-ink-950/4 text-left cursor-pointer transition-colors"
+                >
+                  <div className="font-semibold text-[13.5px] text-ink-950 mb-1">
+                    📄 Export Document Now
+                  </div>
+                  <div className="text-[12px] text-ink-500">
+                    Download the updated PRD as Markdown immediately.
+                  </div>
+                </button>
+              </div>
+
+              {/* List of Applied Findings */}
+              <div className="pt-3 border-t border-line-200 space-y-2">
+                <div className="text-[12px] font-mono font-medium text-accent uppercase tracking-wider">
+                  Applied Findings Log ({appliedIssues.length})
+                </div>
+                <div className="space-y-2">
+                  {appliedIssues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="rounded-lg border border-accent-line/40 bg-accent-tint/20 p-3 text-[12.5px]"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono font-bold text-accent text-[11px]">
+                          {issue.id} — {issue.category}
+                        </span>
+                        <span className="text-xs text-accent font-medium">✓ Applied</span>
+                      </div>
+                      <div className="text-ink-800">{issue.explanation}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : result?.status === "PASS" ? (
-            <div className="rounded-lg border border-accent-line bg-accent-tint p-4 text-[13.5px] text-accent-strong">
-              <p className="font-medium">{result.summary || "The document is complete and ready for development."}</p>
-              <p className="mt-1.5 text-[12.5px] opacity-90">
-                Exporting document automatically…
+            <div className="rounded-lg border border-accent-line bg-accent-tint p-4 text-[13.5px] text-accent-strong space-y-3">
+              <p className="font-medium">
+                {result.summary || "The document is complete and ready for development."}
               </p>
+              <div className="pt-2 flex justify-end">
+                <Button variant="primary" onClick={onExportAnyway}>
+                  Export Document
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -108,11 +225,12 @@ export function FinalReviewModal({
                 </p>
               )}
 
+              {/* Unapplied Findings */}
               <div className="space-y-3">
-                {result?.issues.map((issue) => (
+                {unappliedIssues.map((issue) => (
                   <div
                     key={issue.id}
-                    className="rounded-lg border border-line-300 bg-white p-3.5 shadow-sm space-y-2"
+                    className="rounded-lg border border-line-300 bg-white p-4 shadow-sm space-y-2.5 transition-all"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -123,17 +241,27 @@ export function FinalReviewModal({
                           {issue.category}
                         </span>
                       </div>
-                      <span
-                        className={`rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
-                          issue.severity === "high"
-                            ? "bg-defect-tint text-defect border border-defect-line"
-                            : issue.severity === "medium"
-                              ? "bg-judgment-tint text-judgment border border-judgment-line"
-                              : "bg-accent-tint text-accent border border-accent-line"
-                        }`}
-                      >
-                        {issue.severity}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
+                            issue.severity === "high"
+                              ? "bg-defect-tint text-defect border border-defect-line"
+                              : issue.severity === "medium"
+                                ? "bg-judgment-tint text-judgment border border-judgment-line"
+                                : "bg-accent-tint text-accent border border-accent-line"
+                          }`}
+                        >
+                          {issue.severity}
+                        </span>
+                        <Button
+                          variant="primary"
+                          size="post"
+                          disabled={isRevising}
+                          onClick={() => onApplySingleAiFix(issue)}
+                        >
+                          Apply Fix
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="text-[11.5px] font-mono text-ink-500">
@@ -153,15 +281,40 @@ export function FinalReviewModal({
                   </div>
                 ))}
               </div>
+
+              {/* Applied Findings Section */}
+              {appliedIssues.length > 0 && (
+                <div className="pt-3 border-t border-line-200 space-y-2">
+                  <div className="text-[12px] font-mono font-medium text-accent flex items-center gap-1.5 uppercase tracking-wider">
+                    <span>✓ Applied Changes ({appliedIssues.length})</span>
+                  </div>
+                  <div className="space-y-2">
+                    {appliedIssues.map((issue) => (
+                      <div
+                        key={issue.id}
+                        className="rounded-lg border border-accent-line/40 bg-accent-tint/20 p-3 opacity-80 text-[12.5px]"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono font-bold text-accent text-[11px]">
+                            {issue.id} — Applied
+                          </span>
+                          <span className="text-xs text-accent font-medium">✓ Fixed</span>
+                        </div>
+                        <div className="text-ink-800 line-clamp-2">{issue.explanation}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer Actions */}
-        {!evaluating && result?.status === "REQUIRES_CHANGES" && (
+        {!evaluating && !isRevising && result?.status === "REQUIRES_CHANGES" && unappliedIssues.length > 0 && (
           <div className="flex flex-wrap items-center justify-between border-t border-line-200 pt-4 gap-2">
-            <div className="text-[11.5px] font-mono text-ink-400">
-              {!canApplyAiFixes && "AI cycle limit reached"}
+            <div className="text-[11.5px] text-ink-500">
+              Apply fixes individually or all at once.
             </div>
 
             <div className="flex items-center gap-2">
@@ -173,10 +326,10 @@ export function FinalReviewModal({
               </Button>
               <Button
                 variant="primary"
-                disabled={!canApplyAiFixes}
-                onClick={onApplyAiFixes}
+                disabled={isRevising}
+                onClick={onApplyAllAiFixes}
               >
-                Apply AI Fixes
+                Apply All ({unappliedIssues.length})
               </Button>
             </div>
           </div>
