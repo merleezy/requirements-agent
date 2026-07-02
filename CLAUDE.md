@@ -140,8 +140,10 @@ Decisions made so far, flagged per the rule above:
 - Optimistic UI updates apply rewrite and judgment resolutions instantly to the document state.
 - Requirements confirmed as-is store `acceptedAsIs = true`, bypassing redundant LLM calls on subsequent critic passes.
 - System prompts for local revisions explicitly enforce spacing and word preservation.
-- Document actions send user-role chat messages (`role: "user"`) rendered in dark user chat bubbles on the right of the chat panel.
-- A prominent animated Reviewing Banner displays above the PRD document when the critic agent is actively reviewing requirements.
+- Document actions and inline section comments send user-role chat messages (`role: "user"`) rendered in dark chat bubbles on the right side of the chat panel.
+- Direct user chat input (the text box at the bottom of the chat panel) allows sending custom, freeform messages to Draftsmith at any time for whole-PRD feedback (`revise_global`).
+- Suggested follow-up chips (`chatChips`) are currently static sample chips in `samplePrd.ts` and will be dynamically generated from PRD context and open questions during the step 9 revise-global loop.
+- Export functionality is scheduled for step 10, exporting the complete PRD to Markdown and JSON once the critic rubric export gate passes.
 
 Next: build-order step 8 - settings page (per-stage model dropdowns + presets).
 
