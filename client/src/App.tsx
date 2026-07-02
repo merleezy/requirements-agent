@@ -3,6 +3,7 @@ import { ChatPanel } from "./components/ChatPanel";
 import { ClarifyView } from "./components/ClarifyView";
 import { HomePage } from "./components/HomePage";
 import { PRDDocument } from "./components/PRDDocument";
+import { SettingsPage } from "./components/SettingsPage";
 import { TopBar } from "./components/TopBar";
 import { chatChips } from "./data/samplePrd";
 import {
@@ -195,6 +196,9 @@ function critiqueSummary(
 export default function App() {
   const [state, dispatch] = useReducer(reducer, { prd: null, comments: {}, chat: [] });
   const [clarifyFlow, setClarifyFlow] = useState<ClarifyFlow | null>(null);
+  /* Settings overlays whichever view is current (step 8); Back returns to it.
+   * Plain state, consistent with the no-router decision. */
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [busy, setBusy] = useState<"clarify" | "check" | "draft" | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
@@ -474,7 +478,9 @@ export default function App() {
   return (
     /* Desktop-first per the design reference; below 1080px the page scrolls horizontally */
     <div className="flex h-screen min-w-[1080px] flex-col bg-canvas">
-      {state.prd === null ? (
+      {settingsOpen ? (
+        <SettingsPage onBack={() => setSettingsOpen(false)} />
+      ) : state.prd === null ? (
         clarifyFlow === null ? (
           <HomePage
             apiKey={apiKey}
@@ -483,6 +489,7 @@ export default function App() {
             busy={busy === "check" ? null : busy /* "check" never occurs on home */}
             error={pipelineError}
             onStart={handleStart}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
         ) : (
           <ClarifyView
@@ -501,6 +508,7 @@ export default function App() {
             version={state.prd.version}
             flagCount={flagCount}
             reviewing={reviewing}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
           <div className="flex min-h-0 flex-1">
             <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">

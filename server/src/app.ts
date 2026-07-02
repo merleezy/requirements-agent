@@ -8,6 +8,7 @@ import { SessionStore } from "./session/store.ts";
 import { clarifyRouter } from "./routes/clarify.ts";
 import { criticRouter } from "./routes/critic.ts";
 import { draftRouter } from "./routes/draft.ts";
+import { modelsRouter } from "./routes/models.ts";
 import { reviseLocalRouter } from "./routes/reviseLocal.ts";
 import { sessionRouter } from "./routes/session.ts";
 
@@ -20,6 +21,7 @@ export function createApp(store: SessionStore = new SessionStore()) {
   });
 
   app.use("/api/session", sessionRouter(store));
+  app.use("/api/models", modelsRouter());
   app.use("/api/clarify", clarifyRouter(store));
   app.use("/api/draft", draftRouter(store));
   app.use("/api/critic", criticRouter(store));

@@ -22,6 +22,7 @@ interface HomePageProps {
   /* Non-null when the last attempt failed (e.g. bad key, model error). */
   error: string | null;
   onStart: (ideaText: string) => void;
+  onOpenSettings: () => void;
 }
 
 export function HomePage({
@@ -31,6 +32,7 @@ export function HomePage({
   busy,
   error,
   onStart,
+  onOpenSettings,
 }: HomePageProps) {
   const [idea, setIdea] = useState("");
   const canStart =
@@ -39,7 +41,16 @@ export function HomePage({
   return (
     <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
       <div className="w-full max-w-[640px]">
-        <Wordmark />
+        <div className="flex items-start justify-between">
+          <Wordmark />
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="flex h-[26px] cursor-pointer items-center font-mono text-[10.5px] font-medium text-ink-500 hover:text-ink-950"
+          >
+            Model settings
+          </button>
+        </div>
 
         <div className="overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
           {/* Masthead */}

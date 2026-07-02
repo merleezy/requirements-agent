@@ -6,9 +6,16 @@ interface TopBarProps {
   flagCount: number;
   /* True while a critic pass is in flight (flags may still be arriving). */
   reviewing?: boolean;
+  onOpenSettings: () => void;
 }
 
-export function TopBar({ title, version, flagCount, reviewing = false }: TopBarProps) {
+export function TopBar({
+  title,
+  version,
+  flagCount,
+  reviewing = false,
+  onOpenSettings,
+}: TopBarProps) {
   const flagSummary = reviewing
     ? "Critic reviewing…"
     : flagCount === 0
@@ -33,6 +40,9 @@ export function TopBar({ title, version, flagCount, reviewing = false }: TopBarP
           {flagSummary}
         </div>
         <div className="h-5 w-px bg-line-300" />
+        <Button variant="neutral" onClick={onOpenSettings}>
+          Settings
+        </Button>
         <Button variant="primary">Export</Button>
       </div>
     </div>

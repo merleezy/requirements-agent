@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from "express";
+import { HttpError } from "../errors.ts";
+import { parseModelConfig } from "../llm/modelConfig.ts";
 import { toSessionState, type SessionStore } from "../session/store.ts";
 import { requireSession } from "./require.ts";
 
@@ -20,6 +22,23 @@ export function sessionRouter(store: SessionStore): Router {
   router.get("/", (req: Request, res: Response) => {
     const session = requireSession(store, req);
     res.json(toSessionState(session));
+  });
+
+  /* Save the settings page's per-stage model picks (spec: "Saving writes to
+   * this config object in session state"). Full replacement of all five
+   * stages - parseModelConfig rejects partial or misshapen bodies. */
+  router.put("/model-config", (req: Request, res: Response) => {
+    const session = requireSession(store, req);
+    const body = req.body as { modelConfig?: unknown } | null;
+    let modelConfig;
+    try {
+      modelConfig = parseModelConfig(body?.modelConfig);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      throw new HttpError(400, "INVALID_INPUT", `Invalid modelConfig: ${detail}`);
+    }
+    session.modelConfig = modelConfig;
+    res.json({ modelConfig });
   });
 
   return router;
