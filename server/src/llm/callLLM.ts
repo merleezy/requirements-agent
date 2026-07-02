@@ -25,6 +25,11 @@ import {
   reviseGlobalPrompt,
   parseReviseGlobalOutput,
 } from "../agents/reviseGlobal.ts";
+import {
+  buildFinalReviewUserMessage,
+  finalReviewPrompt,
+  parseFinalReviewOutput,
+} from "../agents/finalReview.ts";
 
 /*
  * The one function that talks to OpenRouter (spec: "No LLM call is ever
@@ -78,6 +83,11 @@ const agents = {
     prompt: reviseLocalPrompt,
     buildUserMessage: buildReviseLocalUserMessage,
     parseOutput: parseReviseLocalOutput,
+  },
+  final_review: {
+    prompt: finalReviewPrompt,
+    buildUserMessage: buildFinalReviewUserMessage,
+    parseOutput: parseFinalReviewOutput,
   },
 } as const;
 

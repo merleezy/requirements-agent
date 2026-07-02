@@ -27,8 +27,13 @@ import {
   type ReviseLocalResult,
 } from "./state/reviseLocal";
 import { sendGlobalFeedback } from "./state/reviseGlobal";
+import { runFinalReview } from "./state/finalReview";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD, PrdItem, Requirement } from "./types";
+import { FinalReviewModal, type FinalReviewResult } from "./components/FinalReviewModal";
+import { downloadPrdAsMarkdown } from "./util/exportPrd";
+
+export const MAX_AUTO_REVIEW_CYCLES = 1;
 
 /*
  * Steps 5-6: starting from the home page runs clarify round 1; if it asks
@@ -271,6 +276,101 @@ export default function App() {
    * chat panel shows a pending bubble and blocks further sends; comment
    * posts are blocked in the handlers below with a chat notice. */
   const [chatBusy, setChatBusy] = useState(false);
+
+  /* Final Review modal state & workflow */
+  const [finalReviewModalOpen, setFinalReviewModalOpen] = useState(false);
+  const [finalReviewEvaluating, setFinalReviewEvaluating] = useState(false);
+  const [finalReviewResult, setFinalReviewResult] = useState<FinalReviewResult | null>(null);
+  const [autoCycleCount, setAutoCycleCount] = useState(0);
+
+  const executeFinalReviewPass = async () => {
+    setFinalReviewEvaluating(true);
+    try {
+      const result = await runFinalReview(apiKey);
+      setFinalReviewEvaluating(false);
+      setFinalReviewResult(result);
+
+      if (result.status === "PASS") {
+        dispatch({
+          type: "agentChat",
+          text: "Final review passed. No significant implementation issues were found.",
+        });
+        const currentPrd = stateRef.current.prd;
+        if (currentPrd) {
+          setTimeout(() => {
+            downloadPrdAsMarkdown(currentPrd);
+            setFinalReviewModalOpen(false);
+          }, 1000);
+        }
+      }
+    } catch (err) {
+      setFinalReviewEvaluating(false);
+      const message = err instanceof Error ? err.message : String(err);
+      dispatch({ type: "agentChat", text: `Final review failed (${message}).` });
+    }
+  };
+
+  const handleExportClick = () => {
+    if (!state.prd) return;
+    setAutoCycleCount(0);
+    setFinalReviewResult(null);
+    setFinalReviewEvaluating(true);
+    setFinalReviewModalOpen(true);
+    void executeFinalReviewPass();
+  };
+
+  const handleApplyAiFixes = async () => {
+    if (!finalReviewResult || !state.prd) return;
+    const issues = finalReviewResult.issues;
+    if (issues.length === 0) return;
+
+    const issuesFormatted = issues
+      .map((i) => `- [${i.id} - ${i.severity}] ${i.explanation} Recommendation: ${i.recommendation}`)
+      .join("\n");
+
+    const instruction =
+      `Treat the current PRD as the canonical document. Preserve all existing content unless a review finding explicitly requires modifying it. ` +
+      `Apply ONLY modifications directly related to the final review findings:\n${issuesFormatted}`;
+
+    dispatch({ type: "sendChat", text: "Apply AI fixes for Final Review findings" });
+    dispatch({ type: "agentChat", text: "Revising PRD based on Final Review findings…" });
+
+    const newCycleCount = autoCycleCount + 1;
+    setAutoCycleCount(newCycleCount);
+    setFinalReviewEvaluating(true);
+
+    setChatBusy(true);
+    try {
+      const { prd, summary, recheckIds } = await sendGlobalFeedback(instruction, undefined, apiKey);
+      dispatch({ type: "applyGlobalRevision", prd });
+      dispatch({ type: "agentChat", text: summary });
+
+      if (recheckIds.length > 0) {
+        const textMap = new Map(
+          prd.functionalRequirements
+            .filter((r) => recheckIds.includes(r.id))
+            .map((r) => [r.id, r.text]),
+        );
+        void runBackgroundCritic(recheckIds, textMap);
+      }
+
+      /* Re-run final review pass for the new cycle */
+      void executeFinalReviewPass();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      dispatch({ type: "agentChat", text: `Couldn't apply AI fixes (${message}).` });
+      setFinalReviewEvaluating(false);
+    } finally {
+      setChatBusy(false);
+    }
+  };
+
+  const handleExportAnyway = () => {
+    if (state.prd) {
+      downloadPrdAsMarkdown(state.prd);
+    }
+    setFinalReviewModalOpen(false);
+  };
 
   async function runRevision(
     id: string,
@@ -638,6 +738,7 @@ export default function App() {
             flagCount={flagCount}
             reviewing={reviewing}
             onOpenSettings={() => setSettingsOpen(true)}
+            onExport={handleExportClick}
           />
           <div className="flex min-h-0 flex-1">
             <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">
@@ -662,6 +763,18 @@ export default function App() {
               onSend={handleSendChat}
             />
           </div>
+
+          {finalReviewModalOpen && (
+            <FinalReviewModal
+              evaluating={finalReviewEvaluating}
+              result={finalReviewResult}
+              autoCycleCount={autoCycleCount}
+              maxAutoCycles={MAX_AUTO_REVIEW_CYCLES}
+              onApplyAiFixes={handleApplyAiFixes}
+              onExportAnyway={handleExportAnyway}
+              onCancel={() => setFinalReviewModalOpen(false)}
+            />
+          )}
         </>
       )}
     </div>

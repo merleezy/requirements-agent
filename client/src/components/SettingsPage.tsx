@@ -58,6 +58,11 @@ const stageRows: StageRow[] = [
     label: "Revise (global)",
     description: "Applies whole-document feedback from the chat panel.",
   },
+  {
+    stage: "final_review",
+    label: "Final Review",
+    description: "Evaluates implementation quality and risks before exporting the document.",
+  },
 ];
 
 /* "Anthropic: Claude Opus 4.8" reads redundantly inside an "anthropic"

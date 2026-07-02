@@ -16,6 +16,7 @@ export const STAGES = [
   "critic",
   "revise_local",
   "revise_global",
+  "final_review",
 ] as const;
 
 export type Stage = (typeof STAGES)[number];

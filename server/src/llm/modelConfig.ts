@@ -13,6 +13,7 @@ export const STAGES = [
   "critic",
   "revise_local",
   "revise_global",
+  "final_review",
 ] as const;
 
 export type Stage = (typeof STAGES)[number];
@@ -24,11 +25,12 @@ export interface StageModelConfig {
 export type ModelConfig = Record<Stage, StageModelConfig>;
 
 export const defaultModelConfig: ModelConfig = {
-  clarify: { model: "deepseek/deepseek-v4-flash" },
+  clarify: { model: "z-ai/glm-5.2" },
   draft: { model: "z-ai/glm-5.2" },
   critic: { model: "deepseek/deepseek-v4-flash" },
   revise_local: { model: "z-ai/glm-5.2" },
-  revise_global: { model: "z-ai/glm-5.2" },
+  revise_global: { model: "anthropic/claude-sonnet-5" },
+  final_review: { model: "anthropic/claude-sonnet-5" },
 };
 
 export function createModelConfig(): ModelConfig {
@@ -37,7 +39,7 @@ export function createModelConfig(): ModelConfig {
 
 /*
  * Presets (spec: "Budget" / "Balanced" / "Max quality"). Selecting one in
- * the settings UI just writes all five stage values at once; "Balanced" IS
+ * the settings UI just writes all stage values at once; "Balanced" IS
  * the per-session default above, so there is one source of truth for it.
  */
 
@@ -52,31 +54,33 @@ export const modelPresets: ModelPreset[] = [
   {
     id: "budget",
     name: "Budget",
-    description: "The cheapest capable model on every stage.",
+    description: "~95% of quality for ~20% of the cost.",
     config: {
       clarify: { model: "deepseek/deepseek-v4-flash" },
-      draft: { model: "deepseek/deepseek-v4-flash" },
+      draft: { model: "minimax/minimax-m3" },
       critic: { model: "deepseek/deepseek-v4-flash" },
-      revise_local: { model: "deepseek/deepseek-v4-flash" },
-      revise_global: { model: "deepseek/deepseek-v4-flash" },
+      revise_local: { model: "minimax/minimax-m3" },
+      revise_global: { model: "z-ai/glm-5.2" },
+      final_review: { model: "deepseek/deepseek-v4-flash" },
     },
   },
   {
     id: "balanced",
     name: "Balanced",
-    description: "Fast models where they're enough, strong ones where writing quality counts.",
+    description: "Recommended default combining fast, cost-effective, and strong frontier models.",
     config: defaultModelConfig,
   },
   {
     id: "max_quality",
     name: "Max quality",
-    description: "Frontier models on every stage, cost aside.",
+    description: "Frontier models on every stage for maximum writing precision.",
     config: {
       clarify: { model: "anthropic/claude-sonnet-5" },
       draft: { model: "anthropic/claude-opus-4.8" },
       critic: { model: "anthropic/claude-sonnet-5" },
-      revise_local: { model: "anthropic/claude-opus-4.8" },
+      revise_local: { model: "anthropic/claude-sonnet-5" },
       revise_global: { model: "anthropic/claude-opus-4.8" },
+      final_review: { model: "anthropic/claude-fable-5" },
     },
   },
 ];
