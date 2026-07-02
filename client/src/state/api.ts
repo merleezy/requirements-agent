@@ -18,12 +18,17 @@ export class ApiError extends Error {
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   sessionId?: string;
+  /* The user's OpenRouter key, attached per request only (spec: key handling).
+   * It travels in a header to be forwarded upstream and is never stored
+   * server-side. */
+  apiKey?: string;
   body?: unknown;
 }
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (options.sessionId) headers["x-session-id"] = options.sessionId;
+  if (options.apiKey) headers["x-openrouter-key"] = options.apiKey;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   const res = await fetch(`/api${path}`, {

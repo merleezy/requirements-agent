@@ -3,7 +3,9 @@ import express, {
   type Request,
   type Response,
 } from "express";
+import { HttpError } from "./errors.ts";
 import { SessionStore } from "./session/store.ts";
+import { draftRouter } from "./routes/draft.ts";
 import { sessionRouter } from "./routes/session.ts";
 
 export function createApp(store: SessionStore = new SessionStore()) {
@@ -15,6 +17,7 @@ export function createApp(store: SessionStore = new SessionStore()) {
   });
 
   app.use("/api/session", sessionRouter(store));
+  app.use("/api/draft", draftRouter(store));
 
   /* Unknown /api paths get the same JSON error shape as everything else. */
   app.use("/api", (_req: Request, res: Response) => {
@@ -23,10 +26,18 @@ export function createApp(store: SessionStore = new SessionStore()) {
     });
   });
 
-  /* Last-resort error handler. Logs the error itself but never the request
-   * (headers carry the user's API key once callLLM lands - keys must never
-   * reach a log, per the spec's key-handling rules). */
+  /* Error handler. HttpError carries the API's uniform error shape (thrown
+   * by route preconditions and callLLM; Express 5 forwards async rejections
+   * here). Logs the error itself but never the request - headers carry the
+   * user's API key, and keys must never reach a log, per the spec's
+   * key-handling rules. */
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+    if (err instanceof HttpError) {
+      res.status(err.status).json({
+        error: { code: err.code, message: err.message },
+      });
+      return;
+    }
     console.error(err.stack ?? err.message);
     res.status(500).json({
       error: { code: "INTERNAL", message: "Internal server error." },

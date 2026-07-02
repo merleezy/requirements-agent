@@ -54,7 +54,7 @@ See the "Code organization" section of the spec for the full reasoning - this is
 
 ## Current stage
 
-Build-order steps 1-4 are done.
+Build-order steps 1-5 are done.
 
 Step 1 (Tailwind theme): tokens extracted from the design reference into `client/src/theme.css`, plus base components (`Button`, `SectionHeading`, `DimensionTag`).
 
@@ -68,6 +68,10 @@ In `server/`, `npm run dev` starts the server on port 3001 with `--watch`, and `
 
 Step 4 (home page + API key onboarding): `HomePage` component (idea textarea, BYOK key input with the spec's trust-signal copy, Start-drafting CTA), plus the client session layer in `client/src/state/` (`api.ts` fetch wrapper, `session.ts` with `useServerSession`/`useApiKey`).
 The client now bootstraps a server session on load and recovers transparently when a stored session id has expired.
+
+Step 5 (draft agent end to end): `server/src/agents/draft.ts` (verbatim prompt + typed input/output + user-message builder + output validator), `server/src/llm/callLLM.ts` (the one OpenRouter caller), and `POST /api/draft` (`server/src/routes/draft.ts`), which creates the `Project`, runs the draft agent, and stores the normalized PRD on the session.
+On the client, `client/src/state/draft.ts` owns the draft call and the wire-to-UI PRD mapping; `App` now renders the real PRD instead of the sample, with drafting/error states surfaced on the home page footer.
+Unit tests landed with it (spec exception to the testing deferral): `server npm test` covers `callLLM`, `modelConfig`, and the draft output validator with a stubbed global `fetch`.
 
 Decisions made so far, flagged per the rule above:
 
@@ -90,10 +94,26 @@ Decisions made so far, flagged per the rule above:
 - Session bootstrap (`client/src/state/session.ts`): restore the id from `sessionStorage` and GET the session, fall back to POST-create on 404/absence; the bootstrap promise is memoized so StrictMode's double effect can't create two server sessions.
 - The API key is held via `useApiKey` in `sessionStorage` (`ra.openrouterKey`), write-through on change, never `localStorage` - per the spec it will be attached per-request only at step 5.
 - The home page extrapolates the document card's design (paper-tint masthead, numbered `SectionHeading` sections, mono kickers); "Draftsmith" (previously just the chat agent's name) doubles as the app wordmark.
-- "Start drafting" requires a non-empty idea, a key, and a reachable backend; until step 5 it shows the hardcoded sample PRD as a stand-in and just holds the idea text in state.
+- "Start drafting" requires a non-empty idea, a key, and a reachable backend; since step 5 it runs the real draft agent and the sample PRD is no longer shown anywhere (its file stays as reference data and still exports the generic chat chips).
 - `Button` gained a `cta` size and shared disabled styling (`opacity-45`, no pointer events).
+- `callLLM(stage, input, ctx)` resolves everything per stage from a registry inside `callLLM.ts` that maps the stage to its agent file's `{ prompt, buildUserMessage, parseOutput }`; agent files own their prompt, typed input/output, and validation, `callLLM` owns only the transport.
+  New stages (clarify/critic/revise) join by adding one registry entry.
+- LLM responses are non-streaming for v1: every agent returns one JSON object and no UI consumes partial output; revisit only if draft latency becomes a UX problem.
+- The user's key travels in an `x-openrouter-key` header, read per request via `requireApiKey` and passed down the call stack only - never stored on the session, never part of a recorded `AgentRun`, and expected HttpErrors are not logged at all.
+- `callLLM` error mapping to the uniform error shape: upstream 401/403 → `401 LLM_UNAUTHORIZED`, 402 → `LLM_PAYMENT_REQUIRED`, 429 → `LLM_RATE_LIMITED`, other non-2xx → `502 LLM_ERROR`, network failure → `502 LLM_UNREACHABLE`, 120s timeout → `504 LLM_TIMEOUT`, unparseable/wrong-shape reply → `502 LLM_BAD_OUTPUT`.
+  Errors are `HttpError` instances (`server/src/errors.ts`) recognized by the app-level handler; Express 5 forwards async throws natively.
+- `AgentRun`s are recorded only for successful calls; failures surface as errors and leave no run behind.
+- Requirement ids returned by the draft model are discarded; the server assigns stable ids (`FR-1`…) so critic flags and annotations always have a reliable target.
+  `POST /api/draft` commits `project`/`prd` to the session only after the LLM call succeeds.
+- The draft agent produces `title` and `summary` fields (prompt revision 2026-07-01, approved); the title is stored on `Project`, the summary on the PRD (`summary` field added to the server PRD type), and the client masthead renders both directly - no mechanical derivation.
+- The server PRD keeps non-requirement sections as plain string arrays; the client wraps them in commentable `PrdItem`s with deterministic position-based ids (`ps`, `tu-n`, `g-n`, `oos-n`, `oq-n`) so they can be re-derived server-side when annotations sync at step 9.
+- The document version stays fixed at "Draft v1" until the revise loop (step 9) introduces versioning.
+- All five prompts got a user-approved revision pass on 2026-07-01 - see the "Revisions" section at the bottom of `docs/agent-prompts.md` for the list and reasoning.
+  Load-bearing consequences for later steps: models never mint ids (the server assigns them, including clarify question ids at step 6 and new-requirement ids at step 9); atomic splits arrive one-requirement-per-line in `suggestedRewrite`/`revisedText`, so steps 7/9 split on newlines; the critic's user message must include the original idea; revise-global's `otherSectionChanges` covers all five non-requirement sections with full-replacement semantics.
+- After a draft, the chat seeds one locally-generated Draftsmith greeting (deterministic, not an LLM reply) stating the requirement count; real chat replies arrive with revise-global.
+- Server unit tests run via `node --test 'src/**/*.test.ts'` (Node's built-in runner on natively-stripped TS, no test deps); `fetch` is stubbed at the global level.
 
-Next: build-order step 5 - draft agent (idea → PRD) wired end to end through `callLLM`.
+Next: build-order step 6 - clarify agent + clarifying Q&A view (prepend the question round-trip before drafting).
 
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.

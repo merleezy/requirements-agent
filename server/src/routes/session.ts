@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import { toSessionState, type SessionStore } from "../session/store.ts";
+import { requireSession } from "./require.ts";
 
-export const SESSION_HEADER = "x-session-id";
+export { SESSION_HEADER } from "./require.ts";
 
 export function sessionRouter(store: SessionStore): Router {
   const router = Router();
@@ -13,30 +14,11 @@ export function sessionRouter(store: SessionStore): Router {
     res.status(201).json(toSessionState(session));
   });
 
-  /* Fetch current session state. 404 (not 401) on unknown/expired ids -
-   * there is no auth here, the id just no longer exists; the client
-   * responds by creating a fresh session. */
+  /* Fetch current session state. requireSession yields 404 (not 401) on
+   * unknown/expired ids - there is no auth here, the id just no longer
+   * exists; the client responds by creating a fresh session. */
   router.get("/", (req: Request, res: Response) => {
-    const id = req.header(SESSION_HEADER);
-    if (!id) {
-      res.status(400).json({
-        error: {
-          code: "SESSION_ID_MISSING",
-          message: `Missing ${SESSION_HEADER} header.`,
-        },
-      });
-      return;
-    }
-    const session = store.get(id);
-    if (!session) {
-      res.status(404).json({
-        error: {
-          code: "SESSION_NOT_FOUND",
-          message: "Session does not exist or has expired.",
-        },
-      });
-      return;
-    }
+    const session = requireSession(store, req);
     res.json(toSessionState(session));
   });
 

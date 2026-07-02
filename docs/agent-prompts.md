@@ -38,10 +38,10 @@ Rules:
 - If the idea is already unambiguous and complete enough to draft from, return an
   empty questions array — do not invent questions to seem thorough.
 
-Output ONLY this JSON shape, no other text:
+Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
   "questions": [
-    { "id": string, "question": string, "whyItMatters": string }
+    { "question": string, "whyItMatters": string }
   ]
 }
 
@@ -66,7 +66,11 @@ concrete over sounding polished.
 Input you will receive: the original idea, plus the clarifying questions and the
 user's answers (if any).
 
-Produce a PRD with exactly these sections:
+Produce a PRD with exactly these fields:
+- title: a short name for the product or feature (3-8 words, plain noun phrase,
+  no marketing language).
+- summary: one sentence stating what the product does and for whom - this is
+  the document's subtitle.
 - problemStatement: 1-3 sentences. What problem, for whom.
 - targetUsers: array of short user descriptions.
 - goals: array of goal statements (outcomes, not features).
@@ -93,14 +97,16 @@ check line by line, so follow these strictly:
   you think they're worth considering, but don't draft them as requirements.
 
 Requirement object shape:
-{ "id": string, "text": string, "section": "functionalRequirements" }
+{ "text": string }
 
-Output ONLY this JSON shape, no other text:
+Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
+  "title": string,
+  "summary": string,
   "problemStatement": string,
   "targetUsers": [string],
   "goals": [string],
-  "functionalRequirements": [{ "id": string, "text": string }],
+  "functionalRequirements": [{ "text": string }],
   "outOfScope": [string],
   "openQuestions": [string]
 }
@@ -147,7 +153,9 @@ For defect dimensions, propose a suggestedRewrite ONLY if you are not guessing a
 resolved ambiguity:
 - testable failures: propose a concrete rewrite. This is safe — you're adding
   precision, not deciding what the feature means.
-- atomic failures: propose a split into separate requirement texts.
+- atomic failures: propose a split into separate requirement texts. Put each
+  resulting requirement on its own line in suggestedRewrite (plain lines, no
+  numbering or bullets).
 - unambiguous failures: do NOT propose a confident rewrite. If you can suggest
   one, it must be explicitly conditioned on a stated assumption (fill the
   "assumption" field) — never silently pick an interpretation.
@@ -157,7 +165,7 @@ For judgment dimensions, never propose a rewrite. suggestedRewrite must be null.
 If the requirement passes all five dimensions, return passed: true and leave the
 other fields null/empty.
 
-Output ONLY this JSON shape, no other text:
+Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
   "requirementId": string,
   "passed": boolean,
@@ -169,7 +177,8 @@ Output ONLY this JSON shape, no other text:
 }
 
 [USER MESSAGE: the single requirement text, plus surrounding context — the
-problem statement and goals, so the critic has enough to judge scope/traceability]
+original idea, the problem statement, and the goals, so the critic has enough
+to judge scope/traceability]
 ```
 
 ---
@@ -191,9 +200,14 @@ will run again automatically after your revision. Your only job is to produce
 the corrected text.
 
 If the user's response doesn't give you enough to resolve the flag confidently,
-say so in the "unresolved" field rather than guessing.
+say so in the "unresolved" field rather than guessing. Exactly one of
+revisedText and unresolved must be non-null.
 
-Output ONLY this JSON shape, no other text:
+If the flag proposed splitting the requirement and the user agreed, put each
+resulting requirement on its own line in revisedText (plain lines, no numbering
+or bullets).
+
+Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
   "requirementId": string,
   "revisedText": string | null,
@@ -223,13 +237,14 @@ For any NEW requirements you add, follow the same rules the draft agent follows:
 one behavior each, don't invent unstated specifics, don't add anything not
 grounded in the idea/goals/feedback given.
 
-Output ONLY this JSON shape, no other text:
+Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
   "changedRequirements": [{ "id": string, "revisedText": string }],
-  "newRequirements": [{ "id": string, "text": string }],
+  "newRequirements": [{ "text": string }],
   "removedRequirementIds": [string],
   "otherSectionChanges": {
     "problemStatement": string | null,
+    "targetUsers": [string] | null,
     "goals": [string] | null,
     "outOfScope": [string] | null,
     "openQuestions": [string] | null
@@ -237,8 +252,9 @@ Output ONLY this JSON shape, no other text:
 }
 
 Every field in otherSectionChanges should be null unless the feedback specifically
-warrants changing that section. Only include entries in the arrays for things that
-actually changed.
+warrants changing that section. A non-null field is the COMPLETE new content for
+that section - a full replacement, not just the added or changed lines. The three
+requirement arrays, by contrast, list only what actually changed.
 
 [USER MESSAGE: full current PRD JSON + user's general feedback text]
 
@@ -246,3 +262,22 @@ NOTE: every requirement in changedRequirements and newRequirements gets
 automatically re-run through the critic after this call — you do not need to
 self-check them.
 ```
+
+---
+
+## Revisions
+
+2026-07-01 - first revision pass, made after wiring the draft agent end to end (build-order step 5) and approved by Isaac:
+
+- All prompts: the output instruction now also forbids markdown code fences.
+  Models were observed wrapping JSON in fences despite "no other text"; `callLLM` still strips fences as a fallback.
+- All prompts: models no longer mint ids.
+  The clarify questions, draft requirements, and revise-global new requirements lost their `id` fields - the server assigns stable ids, so model-provided ones were discarded anyway and only invited collisions.
+- Draft: gained `title` and `summary` output fields.
+  The document masthead needs both, and deriving them mechanically from the idea text produced visibly truncated titles.
+  This also removed an internal inconsistency: the requirement shape declared a `section` field the output example never included.
+- Critic: atomic splits now have a defined encoding - one requirement per line in `suggestedRewrite` - since the output field is a single string but the resolution is multiple requirements.
+- Critic: the stated user message now includes the original idea.
+  The scoped dimension judges whether a requirement is "grounded in the original idea", which was unjudgeable without it.
+- Revise (local): pinned down that exactly one of `revisedText`/`unresolved` is non-null, and adopted the same one-per-line split encoding.
+- Revise (global): `otherSectionChanges` gained the missing `targetUsers` section, and non-null sections are now explicitly full replacements rather than deltas.

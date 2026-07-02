@@ -38,6 +38,9 @@ export interface Requirement {
 }
 
 export interface PRD {
+  /* One-sentence subtitle from the draft agent (prompt revision 2026-07-01);
+   * the document title lives on Project. */
+  summary: string;
   problemStatement: string;
   targetUsers: string[];
   goals: string[];

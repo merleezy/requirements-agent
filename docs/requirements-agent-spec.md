@@ -212,7 +212,7 @@ Five dimensions, checked in this priority order (most-fundamental first — a re
   dimension: "unambiguous" | "atomic" | "testable" | "scoped" | "traceable",
   nature: "defect" | "judgment",
   reason: string,
-  suggestedRewrite: string | null,   // null for judgment dimensions, and for unresolved ambiguity
+  suggestedRewrite: string | null,   // null for judgment dimensions, and for unresolved ambiguity; atomic splits put one requirement per line
   assumption: string | null          // populated only when proposing a rewrite for a previously-ambiguous item
 }
 ```
@@ -222,6 +222,9 @@ Five dimensions, checked in this priority order (most-fundamental first — a re
 ---
 
 ## PRD section structure (what the Draft agent produces)
+
+Document metadata: a short title plus a one-sentence summary (the masthead subtitle).
+Then the sections:
 
 - Problem statement
 - Target users

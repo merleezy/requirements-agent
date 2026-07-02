@@ -14,12 +14,24 @@ interface HomePageProps {
   onApiKeyChange: (key: string) => void;
   /* Non-null when the session bootstrap failed (e.g. server not running). */
   backendError: string | null;
+  /* True while the draft agent call is in flight. */
+  drafting: boolean;
+  /* Non-null when the last draft attempt failed (e.g. bad key, model error). */
+  draftError: string | null;
   onStart: (ideaText: string) => void;
 }
 
-export function HomePage({ apiKey, onApiKeyChange, backendError, onStart }: HomePageProps) {
+export function HomePage({
+  apiKey,
+  onApiKeyChange,
+  backendError,
+  drafting,
+  draftError,
+  onStart,
+}: HomePageProps) {
   const [idea, setIdea] = useState("");
-  const canStart = idea.trim().length > 0 && apiKey.trim().length > 0 && !backendError;
+  const canStart =
+    idea.trim().length > 0 && apiKey.trim().length > 0 && !backendError && !drafting;
 
   return (
     <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
@@ -95,9 +107,17 @@ export function HomePage({ apiKey, onApiKeyChange, backendError, onStart }: Home
               <div className="font-mono text-[10.5px] font-medium text-defect">
                 Backend unreachable - start the server, then reload.
               </div>
+            ) : draftError ? (
+              <div className="font-mono text-[10.5px] font-medium text-defect">
+                Draft failed: {draftError}
+              </div>
+            ) : drafting ? (
+              <div className="font-mono text-[10.5px] font-medium text-ink-400">
+                Draftsmith is writing the first draft - this can take a minute
+              </div>
             ) : (
               <div className="font-mono text-[10.5px] font-medium text-ink-400">
-                Next: clarifying questions · nothing runs until you start
+                Next: PRD draft · nothing runs until you start
               </div>
             )}
             <Button
@@ -107,7 +127,7 @@ export function HomePage({ apiKey, onApiKeyChange, backendError, onStart }: Home
               title={canStart ? undefined : "Enter an idea and your OpenRouter key first"}
               onClick={() => onStart(idea.trim())}
             >
-              Start drafting
+              {drafting ? "Drafting…" : "Start drafting"}
             </Button>
           </div>
         </div>

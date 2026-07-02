@@ -3,26 +3,27 @@ import { ChatPanel } from "./components/ChatPanel";
 import { HomePage } from "./components/HomePage";
 import { PRDDocument } from "./components/PRDDocument";
 import { TopBar } from "./components/TopBar";
-import { chatChips, samplePrd, seedChat, seedComments } from "./data/samplePrd";
+import { chatChips } from "./data/samplePrd";
+import { startDraft } from "./state/draft";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD } from "./types";
 
 /*
- * Steps 2 + 4: home page (idea input + key onboarding) in front of the PRD
- * document view. The app is a linear session-scoped pipeline, so views are
- * switched with plain state, not a router. Until the draft agent lands
- * (step 5), starting a project shows the hardcoded sample PRD as a stand-in
- * and the idea text is only held in state; document interactions still
- * mutate local state only.
+ * Step 5: the home page hands the idea to the real draft agent
+ * (POST /api/draft through callLLM) and the document view renders the
+ * returned PRD - the sample PRD is no longer shown. Document interactions
+ * (comments, flag actions, chat) still mutate local state only; they sync
+ * to the server with the critic (step 7) and annotation loop (step 9).
  */
 
 interface AppState {
-  prd: PRD;
+  prd: PRD | null; /* null = no project yet (home view) */
   comments: Record<string, Comment[]>;
   chat: ChatMessage[];
 }
 
 type Action =
+  | { type: "loadPrd"; prd: PRD }
   | { type: "acceptRewrite"; id: string }
   | { type: "dismissFlag"; id: string } /* Decline / Accept as-is */
   | { type: "moveToOutOfScope"; id: string }
@@ -30,6 +31,22 @@ type Action =
   | { type: "sendChat"; text: string };
 
 function reducer(state: AppState, action: Action): AppState {
+  if (action.type === "loadPrd") {
+    const count = action.prd.functionalRequirements.length;
+    return {
+      prd: action.prd,
+      comments: {},
+      chat: [
+        {
+          id: crypto.randomUUID(),
+          role: "agent",
+          text: `I drafted this PRD from your idea - ${count} functional ${count === 1 ? "requirement" : "requirements"} across the standard sections. Read it over and leave comments on anything that looks off.`,
+        },
+      ],
+    };
+  }
+  if (!state.prd) return state;
+
   switch (action.type) {
     case "acceptRewrite":
       return {
@@ -100,31 +117,44 @@ function reducer(state: AppState, action: Action): AppState {
 }
 
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, {
-    prd: samplePrd,
-    comments: seedComments,
-    chat: seedChat,
-  });
-  /* null = no project started yet (home view). Sent to the draft agent at step 5. */
-  const [ideaText, setIdeaText] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, { prd: null, comments: {}, chat: [] });
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
   const { error: backendError } = useServerSession();
   const [apiKey, setApiKey] = useApiKey();
 
-  const flagCount = state.prd.functionalRequirements.filter((r) => r.flag).length;
+  async function handleStart(ideaText: string) {
+    setDrafting(true);
+    setDraftError(null);
+    try {
+      const prd = await startDraft(ideaText, apiKey);
+      dispatch({ type: "loadPrd", prd });
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  const flagCount = state.prd
+    ? state.prd.functionalRequirements.filter((r) => r.flag).length
+    : 0;
 
   return (
     /* Desktop-first per the design reference; below 1080px the page scrolls horizontally */
     <div className="flex h-screen min-w-[1080px] flex-col bg-canvas">
-      {ideaText === null ? (
+      {state.prd === null ? (
         <HomePage
           apiKey={apiKey}
           onApiKeyChange={setApiKey}
           backendError={backendError}
-          onStart={setIdeaText}
+          drafting={drafting}
+          draftError={draftError}
+          onStart={handleStart}
         />
       ) : (
         <>
-          <TopBar title="Receipt Capture" version={state.prd.version} flagCount={flagCount} />
+          <TopBar title={state.prd.title} version={state.prd.version} flagCount={flagCount} />
           <div className="flex min-h-0 flex-1">
             <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">
               <PRDDocument
