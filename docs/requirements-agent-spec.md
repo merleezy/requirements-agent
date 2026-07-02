@@ -251,6 +251,20 @@ Steps 4 and 8 exist because the earlier draft of this order only ever produced t
 
 ---
 
+## Testing & production hardening (deferred)
+
+Deferred for now: CI/CD automation, structured logging infrastructure, and broad end-to-end test coverage.
+The build order above isn't finished, and the pipeline's shape - what `callLLM` returns, how errors propagate to the UI, what session state looks like - is still being decided one step at a time.
+Automating around an interface that's still changing would mean rewriting the harness a few times for no benefit.
+
+Not deferred: lightweight unit tests for the two pieces the "genuinely hard parts" section above already flags as worth real effort - the critic rubric logic and the `callLLM` / `modelConfig` abstraction.
+These are exactly the places where a silent regression (the critic returning more than one flag, a stage silently reading the wrong model) would be easy to miss in a quick review and easy to catch with a test.
+Add these as each piece gets built (steps 5, 7, 9), not as a separate later pass.
+
+Revisit trigger: once the pipeline is wired end to end (after step 9, annotation → revise loop), reconsider broader e2e coverage and a basic CI job (lint + build + unit tests on push) - before that point, step-by-step review is the regression safety net instead of automation.
+
+---
+
 ## v2+ ideas (park these)
 
 - Stage-4 handoff: PRD → technical breakdown / task list / data-model sketch
