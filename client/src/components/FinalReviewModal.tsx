@@ -28,6 +28,63 @@ export interface FinalReviewModalProps {
   onCancel: () => void;
 }
 
+function IssueCard({
+  issue,
+  isRevising,
+  onApplySingleAiFix,
+}: {
+  issue: FinalReviewIssue;
+  isRevising: boolean;
+  onApplySingleAiFix: (issue: FinalReviewIssue) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-line-300 bg-white p-4 shadow-sm space-y-2.5 transition-all">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[11px] font-bold text-ink-400">{issue.id}</span>
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-600">
+            {issue.category}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
+              issue.severity === "high"
+                ? "bg-defect-tint text-defect border border-defect-line"
+                : issue.severity === "medium"
+                  ? "bg-judgment-tint text-judgment border border-judgment-line"
+                  : "bg-accent-tint text-accent border border-accent-line"
+            }`}
+          >
+            {issue.severity}
+          </span>
+          <Button
+            variant="primary"
+            size="post"
+            disabled={isRevising}
+            onClick={() => onApplySingleAiFix(issue)}
+          >
+            Apply Fix
+          </Button>
+        </div>
+      </div>
+
+      <div className="text-[11.5px] font-mono text-ink-500">Location: {issue.location}</div>
+
+      <div className="text-[13px] leading-normal text-ink-950 font-medium">
+        {issue.explanation}
+      </div>
+
+      {issue.recommendation && (
+        <div className="text-[12.5px] leading-normal text-ink-600 border-l-2 border-accent pl-2.5 mt-1">
+          <span className="font-semibold text-accent">Recommendation: </span>
+          {issue.recommendation}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function FinalReviewModal({
   evaluating,
   result,
@@ -83,7 +140,9 @@ export function FinalReviewModal({
                     : unappliedIssues.length === 0 && appliedIssues.length > 0
                       ? `Successfully applied ${appliedIssues.length} fix${appliedIssues.length === 1 ? "" : "es"} to your PRD.`
                       : result?.status === "PASS"
-                        ? "No significant implementation issues were found."
+                        ? unappliedIssues.length > 0
+                          ? `Buildable as written - ${unappliedIssues.length} non-blocking note${unappliedIssues.length === 1 ? "" : "s"}.`
+                          : "No significant implementation issues were found."
                         : `${unappliedIssues.length} open finding${unappliedIssues.length === 1 ? "" : "s"} (${appliedIssues.length} applied).`}
               </p>
             </div>
@@ -207,15 +266,39 @@ export function FinalReviewModal({
               </div>
             </div>
           ) : result?.status === "PASS" ? (
-            <div className="rounded-lg border border-accent-line bg-accent-tint p-4 text-[13.5px] text-accent-strong space-y-3">
-              <p className="font-medium">
-                {result.summary || "The document is complete and ready for development."}
-              </p>
-              <div className="pt-2 flex justify-end">
-                <Button variant="primary" onClick={onExportAnyway}>
-                  Export Document
-                </Button>
+            <div className="space-y-4">
+              <div className="rounded-lg border border-accent-line bg-accent-tint p-4 text-[13.5px] text-accent-strong space-y-3">
+                <p className="font-medium">
+                  {result.summary || "The document is complete and ready for development."}
+                </p>
+                {unappliedIssues.length > 0 && (
+                  <p className="text-[12.5px] opacity-90 leading-normal">
+                    The notes below are non-blocking. Apply any that seem worth it, or export
+                    the document as is.
+                  </p>
+                )}
+                <div className="pt-2 flex justify-end">
+                  <Button variant="primary" onClick={onExportAnyway}>
+                    Export Document
+                  </Button>
+                </div>
               </div>
+
+              {unappliedIssues.length > 0 && (
+                <div className="space-y-3">
+                  <div className="text-[12px] font-mono font-medium text-ink-500 uppercase tracking-wider">
+                    Non-blocking notes ({unappliedIssues.length})
+                  </div>
+                  {unappliedIssues.map((issue) => (
+                    <IssueCard
+                      key={issue.id}
+                      issue={issue}
+                      isRevising={isRevising}
+                      onApplySingleAiFix={onApplySingleAiFix}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -228,57 +311,12 @@ export function FinalReviewModal({
               {/* Unapplied Findings */}
               <div className="space-y-3">
                 {unappliedIssues.map((issue) => (
-                  <div
+                  <IssueCard
                     key={issue.id}
-                    className="rounded-lg border border-line-300 bg-white p-4 shadow-sm space-y-2.5 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] font-bold text-ink-400">
-                          {issue.id}
-                        </span>
-                        <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-600">
-                          {issue.category}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
-                            issue.severity === "high"
-                              ? "bg-defect-tint text-defect border border-defect-line"
-                              : issue.severity === "medium"
-                                ? "bg-judgment-tint text-judgment border border-judgment-line"
-                                : "bg-accent-tint text-accent border border-accent-line"
-                          }`}
-                        >
-                          {issue.severity}
-                        </span>
-                        <Button
-                          variant="primary"
-                          size="post"
-                          disabled={isRevising}
-                          onClick={() => onApplySingleAiFix(issue)}
-                        >
-                          Apply Fix
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="text-[11.5px] font-mono text-ink-500">
-                      Location: {issue.location}
-                    </div>
-
-                    <div className="text-[13px] leading-normal text-ink-950 font-medium">
-                      {issue.explanation}
-                    </div>
-
-                    {issue.recommendation && (
-                      <div className="text-[12.5px] leading-normal text-ink-600 border-l-2 border-accent pl-2.5 mt-1">
-                        <span className="font-semibold text-accent">Recommendation: </span>
-                        {issue.recommendation}
-                      </div>
-                    )}
-                  </div>
+                    issue={issue}
+                    isRevising={isRevising}
+                    onApplySingleAiFix={onApplySingleAiFix}
+                  />
                 ))}
               </div>
 

@@ -201,7 +201,17 @@ Decisions made at step 9, flagged per the rule above:
 - The full server→client PRD mapping (`toClientPrd`) moved into `client/src/state/prdMapping.ts`, shared by draft and revise-global.
 - Route tests drive a real express app on an ephemeral port with global fetch stubbed only for the OpenRouter URL; UI verification stubbed the four LLM-backed `/api` endpoints in the page and exercised the full document flow in the browser without a key.
 
-Next: build-order step 10 - export (PRD → Markdown / JSON, gated on the critic rubric).
+Step 10 (export + final review gate) is partially landed (from a session that predates this note): `server/src/agents/finalReview.ts` + `POST /api/final-review` run a "lead engineer" go/no-go review over the whole PRD, the client gates Markdown export behind it (`ExportOptionsModal` → `FinalReviewModal`, `client/src/util/exportPrd.ts`), and findings can be applied through `revise_global` ("Apply Fix" / "Apply All").
+Decisions made at step 10, flagged per the rule above:
+
+- The final-review prompt is documented as section 6 of `docs/agent-prompts.md` (it originally existed only in the agent file), and the critic prompt in section 3 was re-synced to the shipped version at the same time - see the doc's Revisions section, fourth pass (2026-07-02).
+- Final review converges by construction (2026-07-02, fixing an endless re-run loop): severities have definitions where only `high` (incorrect behavior, contradiction, divergent implementations) can block, and `parseFinalReviewOutput` derives the status from issue severities rather than trusting the model's status field.
+  Medium/low findings ride along as non-blocking notes on a PASS, rendered in the modal with per-note Apply Fix; auto-export on PASS happens only when there are zero notes.
+  Issues are capped in the prompt at 5 and truncated in the parser at 8, sorted high-first.
+- Re-running the review sends the previous round's findings back (`previousFindings` in the POST body, disposition `fix_applied` or `not_addressed`, built client-side from `appliedIssueIds`).
+  The prompt's Re-review Rules make the next round verify prior fixes, treat left-as-is findings as accepted risk that is never re-raised, and forbid new sub-high findings on unchanged content.
+- The critic's assumptions gained temporal defaults (same pass): a stated trigger or cadence ("daily", "when X happens") settles timing, and time-of-day/channel/timezone/retry details are tuning parameters, not defects.
+  This stops the flag → rewrite → re-flag loop on reminder/notification/recurring-behavior requirements.
 
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.

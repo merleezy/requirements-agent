@@ -27,7 +27,7 @@ import {
   type ReviseLocalResult,
 } from "./state/reviseLocal";
 import { sendGlobalFeedback } from "./state/reviseGlobal";
-import { runFinalReview } from "./state/finalReview";
+import { runFinalReview, type PreviousFindingPayload } from "./state/finalReview";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD, PrdItem, Requirement } from "./types";
 import {
@@ -37,8 +37,6 @@ import {
 } from "./components/FinalReviewModal";
 import { ExportOptionsModal } from "./components/ExportOptionsModal";
 import { downloadPrdAsMarkdown } from "./util/exportPrd";
-
-export const MAX_AUTO_REVIEW_CYCLES = 1;
 
 /*
  * Steps 5-6: starting from the home page runs clarify round 1; if it asks
@@ -301,7 +299,21 @@ export default function App() {
     setChatBusy(false);
   };
 
-  const executeFinalReviewPass = async () => {
+  /* The previous round's findings, with what the user did about each, sent
+   * back on re-runs so the reviewer verifies fixes and converges instead of
+   * sampling fresh nitpicks every pass. */
+  const buildPreviousFindings = (): PreviousFindingPayload[] | undefined => {
+    if (!finalReviewResult || finalReviewResult.issues.length === 0) return undefined;
+    return finalReviewResult.issues.map((i) => ({
+      severity: i.severity,
+      category: i.category,
+      location: i.location,
+      explanation: i.explanation,
+      disposition: appliedIssueIds.has(i.id) ? "fix_applied" : "not_addressed",
+    }));
+  };
+
+  const executeFinalReviewPass = async (previousFindings?: PreviousFindingPayload[]) => {
     if (activeAbortControllerRef.current) {
       activeAbortControllerRef.current.abort();
     }
@@ -310,21 +322,28 @@ export default function App() {
 
     setFinalReviewEvaluating(true);
     try {
-      const result = await runFinalReview(apiKey, controller.signal);
+      const result = await runFinalReview(apiKey, previousFindings, controller.signal);
       setFinalReviewEvaluating(false);
       setFinalReviewResult(result);
 
       if (result.status === "PASS") {
-        dispatch({
-          type: "agentChat",
-          text: "Final review passed. No significant implementation issues were found.",
-        });
-        const currentPrd = stateRef.current.prd;
-        if (currentPrd) {
-          setTimeout(() => {
-            downloadPrdAsMarkdown(currentPrd);
-            setFinalReviewModalOpen(false);
-          }, 1000);
+        if (result.issues.length === 0) {
+          dispatch({
+            type: "agentChat",
+            text: "Final review passed. No significant implementation issues were found.",
+          });
+          const currentPrd = stateRef.current.prd;
+          if (currentPrd) {
+            setTimeout(() => {
+              downloadPrdAsMarkdown(currentPrd);
+              setFinalReviewModalOpen(false);
+            }, 1000);
+          }
+        } else {
+          dispatch({
+            type: "agentChat",
+            text: `Final review passed - the PRD is buildable as written. ${result.issues.length} non-blocking note${result.issues.length === 1 ? "" : "s"} listed in the review dialog.`,
+          });
         }
       }
     } catch (err) {
@@ -353,21 +372,23 @@ export default function App() {
   };
 
   const handleConfirmRunReview = () => {
+    const previousFindings = buildPreviousFindings();
     setExportOptionsModalOpen(false);
     setAppliedIssueIds(new Set());
     setRevisingIssueId(null);
     setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
     setFinalReviewModalOpen(true);
-    void executeFinalReviewPass();
+    void executeFinalReviewPass(previousFindings);
   };
 
   const handleReRunReview = () => {
+    const previousFindings = buildPreviousFindings();
     setAppliedIssueIds(new Set());
     setRevisingIssueId(null);
     setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
-    void executeFinalReviewPass();
+    void executeFinalReviewPass(previousFindings);
   };
 
   const handleExportImmediately = () => {

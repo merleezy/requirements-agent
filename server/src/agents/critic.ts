@@ -7,8 +7,8 @@ import type { FlagNature, RubricDimension } from "../types.ts";
  * spec) and is structural here - the output is a single flag object.
  *
  * The prompt below is verbatim from docs/agent-prompts.md ("3. Critic
- * agent", incl. the 2026-07-01 revisions) - do not edit it here without
- * flagging the change first, per CLAUDE.md. This file owns the stage's
+ * agent", kept in sync through the 2026-07-02 revision passes) - do not
+ * edit it here without flagging the change first, per CLAUDE.md. This file owns the stage's
  * typed input/output, the user message, and validation/normalization of the
  * model's reply; callLLM owns the transport.
  */
@@ -32,6 +32,8 @@ Assumptions
 Assume ordinary software conventions unless the requirement explicitly overrides them. For example:
 - "current balance" means the balance when the action is executed.
 - "notification" refers to a normal static notification unless otherwise specified.
+- Time-based behavior (reminders, recurring notifications, scheduled or periodic actions, streaks, anything that repeats or accumulates over time) follows ordinary scheduling conventions. A stated trigger or cadence such as "daily", "weekly", "when X happens", or "after N days" is precise enough. Unspecified details like exact time of day, delivery channel, timezone handling, or retry behavior are tuning parameters, not defects.
+- Treat timing as a defect ONLY when the requirement states no usable trigger or cadence at all AND that choice would meaningfully change external behavior.
 - Named roles such as "leader", "owner", or "administrator" are acceptable unless permissions behavior is unclear in context.
 - Do not invent unlikely interpretations simply because they are technically possible.
 
@@ -123,6 +125,7 @@ Very Important
 
 - Do NOT flag cosmetic improvements.
 - Do NOT flag wording preferences.
+- Do NOT demand additional timing precision from time-based requirements once a trigger or cadence is stated. Scheduling mechanics belong to the implementation.
 - Do NOT expand scope or introduce missing features.
 - Do NOT treat absence of information as a defect unless it directly affects system behavior.
 - Do NOT assume missing context belongs in this requirement.
