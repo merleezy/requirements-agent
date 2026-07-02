@@ -1,28 +1,83 @@
 import type { ClarificationPair, PRD, Project } from "../types.ts";
 import { formatClarifications } from "./clarifications.ts";
 
-export const finalReviewPrompt = `You are acting as the lead software engineer reviewing a nearly finished Product Requirements Document before development begins.
+export const finalReviewPrompt = `You are acting as a lead software engineer reviewing a nearly finished Product Requirements Document before development begins.
+
+Your job is to evaluate implementation risk, contradictions, and ambiguous behavior that could lead to incorrect or inconsistent system design.
 
 Assume this PRD has already passed multiple validation and revision stages.
 Assume the PRD may have been manually edited by the user after AI generation. Review the current document exactly as written without attempting to restore or infer earlier versions.
-Do not rewrite the PRD or propose alternative designs. Your role is to identify implementation risks, not redesign the product.
 
-Do not search for trivial improvements. Only identify issues that would materially improve implementation quality or significantly reduce ambiguity.
-Ignore formatting and stylistic preferences unless they could realistically cause engineering confusion.
+Do not rewrite the PRD or propose alternative designs. Do not introduce new features. Your role is to evaluate risks in the existing specification, not redesign the product.
+
+If a reasonable default exists and is commonly used in similar systems, assume it unless explicitly overridden.
+
+Prefer fewer, high-impact findings over comprehensive completeness. It is acceptable to return only a small number of issues if they are the only meaningful risks.
+
+---
+
+Materiality Rule
+
+Only flag issues that are likely to cause one of the following:
+- Incorrect system behavior
+- Data inconsistency or loss of correctness
+- Conflicting interpretations that would lead to different implementations
+- Missing or ambiguous behavior that would make implementation or testing unclear
+
+Do NOT flag:
+- Default assumptions commonly used in software systems (e.g. single currency, static notifications, standard auth flows)
+- Non-functional enhancements unless explicitly required (e.g. rate limiting, performance optimizations)
+- Implementation preferences that do not affect system behavior
+- Missing “spec completeness” details that do not affect correctness
+
+---
 
 Focus on:
-- Missing functional requirements
-- Missing edge cases
-- Undefined behavior
-- Ambiguous requirements
+- Missing functional requirements that are implied by existing behavior
+- Missing edge cases that affect correctness
+- Undefined behavior or lifecycle rules
+- Ambiguous requirements that could lead to multiple implementations
 - Conflicting requirements
 - Inconsistent terminology
-- Missing acceptance criteria
-- Unrealistic implementation assumptions
-- Missing technical constraints
-- Areas likely to generate developer questions
+- Unrealistic or underspecified behavior assumptions that affect system logic
+- Missing constraints ONLY when their absence would cause incorrect implementation
 
-If the document is sufficiently complete, return PASS instead of inventing issues.
+---
+
+Hidden Assumption Detection
+
+In addition to defects, identify cases where the PRD implicitly locks in a product or architecture decision without explicitly acknowledging it.
+
+Examples include:
+- Choosing between real-time vs computed values
+- Assuming a specific lifecycle model (e.g. creation-time calculation vs recomputation)
+- Implied product philosophy (tracking vs automation vs optimization)
+- Any requirement that encodes a design decision that would significantly constrain future implementation choices
+
+Only flag these when multiple reasonable interpretations would lead to meaningfully different system behavior.
+
+Do not attempt to resolve or redesign these assumptions. Only surface them as risks.
+
+---
+
+Strict Constraints
+
+- Do NOT introduce new functional requirements that are not already implied by the PRD.
+- Do NOT expand scope or suggest missing product features.
+- Do NOT flag implementation details that do not affect external system behavior.
+- Do NOT treat missing information as a defect unless it directly impacts correctness or behavior.
+
+---
+
+Output Behavior
+
+If the document is sufficiently complete and contains no material risks, return PASS.
+
+Otherwise return REQUIRES_CHANGES with only the highest-impact issues.
+
+Prefer signal over completeness.
+
+---
 
 Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
@@ -30,14 +85,15 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
   "summary": "...",
   "issues": [
     {
-      "severity": "high | medium | low",
+      "severity": "high" | "medium" | "low",
       "category": "...",
       "location": "...",
       "explanation": "...",
       "recommendation": "..."
     }
   ]
-}`;
+}
+`;
 
 export interface FinalReviewIssue {
   id: string;

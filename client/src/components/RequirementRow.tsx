@@ -121,7 +121,7 @@ export function RequirementRow({
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     placeholder="What should this actually say?"
-                    className="w-full resize-none rounded-lg border border-line-400 bg-white px-3 py-2 text-[13px] leading-[1.5] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
+                    className="w-full resize-none rounded-lg border border-line-400 bg-white px-3 py-2 text-[13px] leading-normal text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
                   />
                   <div className="mt-2">
                     <Button
@@ -136,7 +136,7 @@ export function RequirementRow({
                 </div>
               )}
               {unresolvedMessage && (
-                <div className="mt-2 text-[12.5px] leading-[1.5] text-defect">
+                <div className="mt-2 text-[12.5px] leading-normal text-defect">
                   Draftsmith: {unresolvedMessage}
                 </div>
               )}
@@ -149,7 +149,13 @@ export function RequirementRow({
                 disabled={busy}
                 onClick={() => onApplySuggestion(r.id)}
               >
-                {busy ? "Applying…" : "Apply suggestion"}
+                {busy
+                  ? "Applying…"
+                  : flag.dimension === "scoped"
+                    ? "Ground in PRD"
+                    : flag.dimension === "traceable"
+                      ? "Update goals"
+                      : "Update PRD"}
               </Button>
               <Button variant="judgment" disabled={busy} onClick={() => onConfirmJudgment(r.id)}>
                 {busy ? "Confirming…" : "Accept as-is anyway"}
@@ -165,8 +171,6 @@ export function RequirementRow({
           )}
         </div>
       )}
-
-      {/* Requirement Text & Flags */}
     </div>
   );
 }

@@ -715,12 +715,20 @@ export default function App() {
     if (!req || !req.flag) return;
     const ref = req.ref;
     const reason = req.flag.reason ?? "";
+    const dimension = req.flag.dimension;
+
+    const actionText =
+      dimension === "scoped"
+        ? `Ground ${ref} in PRD`
+        : dimension === "traceable"
+          ? `Update goals for ${ref}`
+          : `Update PRD for ${ref}`;
 
     dispatch({ type: "optimisticConfirmJudgment", id });
-    dispatch({ type: "sendChat", text: `Apply suggestion for ${ref}` });
-    dispatch({ type: "agentChat", text: `Applying recommendation for **${ref}**…` });
+    dispatch({ type: "sendChat", text: actionText });
+    dispatch({ type: "agentChat", text: `Updating PRD context/goals for **${ref}**…` });
 
-    const instruction = `Requirement ${ref} ("${req.text}") was flagged (${req.flag.dimension}): "${reason}". Update the PRD context or goals accordingly to ground this requirement.`;
+    const instruction = `Requirement ${ref} ("${req.text}") was flagged (${dimension}): "${reason}". Update the PRD context or goals accordingly to ground this requirement.`;
     void runGlobalFeedback(instruction, id);
   };
 
