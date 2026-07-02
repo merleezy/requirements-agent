@@ -1,34 +1,13 @@
 import type { PRD } from "../types";
 import { api } from "./api";
 import type { ClarificationPair } from "./clarify";
-import { toClientOutOfScope, toClientRequirements, type ServerRequirement } from "./prdMapping";
+import { toClientPrd, type ServerPrd, type ServerProject } from "./prdMapping";
 import { bootstrapSession } from "./session";
 
 /*
- * Step 5: the draft call (idea -> PRD) and the wire-to-UI mapping.
- *
- * The server's PRD deliberately stores non-requirement sections as plain
- * strings; the client wraps them in PrdItems with deterministic local ids so
- * they are commentable. When annotations sync to the server (step 9), these
- * ids must be re-derivable there - hence position-based, not random.
+ * Step 5: the draft call (idea -> PRD). The wire-to-UI mapping now lives in
+ * state/prdMapping.ts, shared with the local and global revise loops.
  */
-
-interface ServerPrd {
-  summary: string;
-  problemStatement: string;
-  targetUsers: string[];
-  goals: string[];
-  functionalRequirements: ServerRequirement[];
-  outOfScope: string[];
-  openQuestions: string[];
-}
-
-interface ServerProject {
-  title: string;
-  ideaText: string;
-  createdAt: string;
-  stage: string;
-}
 
 interface DraftResponse {
   sessionId: string;
@@ -48,21 +27,5 @@ export async function startDraft(
     apiKey,
     body: { ideaText, clarifications },
   });
-  return toClientPrd(state);
-}
-
-function toClientPrd(state: DraftResponse): PRD {
-  const { project, prd } = state;
-  return {
-    /* Both come from the draft agent itself (prompt revision 2026-07-01). */
-    title: project.title,
-    subtitle: prd.summary,
-    version: "Draft v1" /* version bumps arrive with the revise loop (step 9) */,
-    problemStatement: { id: "ps", text: prd.problemStatement },
-    targetUsers: prd.targetUsers.map((text, i) => ({ id: `tu-${i + 1}`, text })),
-    goals: prd.goals.map((text, i) => ({ id: `g-${i + 1}`, text })),
-    functionalRequirements: toClientRequirements(prd.functionalRequirements),
-    outOfScope: toClientOutOfScope(prd.outOfScope),
-    openQuestions: prd.openQuestions.map((text, i) => ({ id: `oq-${i + 1}`, text })),
-  };
+  return toClientPrd(state.project, state.prd);
 }

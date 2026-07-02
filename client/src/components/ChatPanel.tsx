@@ -1,24 +1,34 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import type { ChatChip } from "../state/chips";
 import type { ChatMessage } from "../types";
 import { Button } from "./Button";
 
 /*
- * Right-hand persistent chat panel for whole-document feedback.
- * Static in step 2: messages append locally; the revise-global agent
- * is wired in at build-order step 7.
+ * Right-hand persistent chat panel for whole-document feedback. Sending runs
+ * the revise-global loop (step 9); while `busy`, a transient "revising"
+ * bubble shows and the input is disabled. Chips send a fuller message than
+ * their label through the same path.
  */
 
 interface ChatPanelProps {
   messages: ChatMessage[];
-  chips: string[];
+  chips: ChatChip[];
+  busy: boolean;
   onSend: (text: string) => void;
 }
 
-export function ChatPanel({ messages, chips, onSend }: ChatPanelProps) {
+export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
+  /* Scroll the newest message (or the pending bubble) into view - real
+   * replies arrive after a round trip, so the user must always see them. */
+  const bottomRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages, busy]);
 
   const send = (text?: string) => {
+    if (busy) return;
     const t = (text ?? draft).trim();
     if (!t) return;
     onSend(t);
@@ -70,17 +80,29 @@ export function ChatPanel({ messages, chips, onSend }: ChatPanelProps) {
             </div>
           </div>
         ))}
+        {busy && (
+          <div className="mb-4 flex items-start gap-[9px]">
+            <div className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-[5px] bg-accent font-mono text-[9px] font-semibold text-white">
+              AI
+            </div>
+            <div className="max-w-[255px] animate-pulse rounded-[3px_11px_11px_11px] border border-line-200 bg-white px-[13px] py-2.5 text-[13px] leading-[1.55] text-ink-400">
+              Draftsmith is revising the document…
+            </div>
+          </div>
+        )}
         <div className="mt-1.5 flex flex-wrap gap-[7px]">
-          {chips.map((label) => (
+          {chips.map((chip) => (
             <button
-              key={label}
-              onClick={() => send(label)}
-              className="cursor-pointer rounded-[14px] border border-line-400 bg-white px-3 py-1.5 text-[11px] font-medium text-ink-800 hover:border-accent hover:text-accent"
+              key={chip.label}
+              onClick={() => send(chip.message)}
+              disabled={busy}
+              className="cursor-pointer rounded-[14px] border border-line-400 bg-white px-3 py-1.5 text-[11px] font-medium text-ink-800 hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-45"
             >
-              {label}
+              {chip.label}
             </button>
           ))}
         </div>
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
@@ -89,12 +111,19 @@ export function ChatPanel({ messages, chips, onSend }: ChatPanelProps) {
           <textarea
             rows={1}
             value={draft}
+            disabled={busy}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Ask, revise the plan, or add something missing…"
-            className="max-h-[120px] flex-1 resize-none border-none bg-transparent text-[13px] leading-[1.5] text-ink-950 outline-none"
+            className="max-h-[120px] flex-1 resize-none border-none bg-transparent text-[13px] leading-[1.5] text-ink-950 outline-none disabled:opacity-45"
           />
-          <Button variant="solid" size="send" className="flex-none" onClick={() => send()}>
+          <Button
+            variant="solid"
+            size="send"
+            className="flex-none"
+            disabled={busy}
+            onClick={() => send()}
+          >
             Send
           </Button>
         </div>

@@ -16,6 +16,8 @@ test("critic router skips LLM calls for accepted-as-is requirements", async () =
     stage: "reviewing",
   };
   session.prd = {
+    version: 1,
+    nextRequirementNumber: 2,
     summary: "PRD Summary",
     problemStatement: "Problem statement",
     targetUsers: ["Target user 1"],

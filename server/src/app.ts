@@ -9,6 +9,7 @@ import { clarifyRouter } from "./routes/clarify.ts";
 import { criticRouter } from "./routes/critic.ts";
 import { draftRouter } from "./routes/draft.ts";
 import { modelsRouter } from "./routes/models.ts";
+import { reviseGlobalRouter } from "./routes/reviseGlobal.ts";
 import { reviseLocalRouter } from "./routes/reviseLocal.ts";
 import { sessionRouter } from "./routes/session.ts";
 
@@ -26,6 +27,7 @@ export function createApp(store: SessionStore = new SessionStore()) {
   app.use("/api/draft", draftRouter(store));
   app.use("/api/critic", criticRouter(store));
   app.use("/api/revise-local", reviseLocalRouter(store));
+  app.use("/api/revise-global", reviseGlobalRouter(store));
 
   /* Unknown /api paths get the same JSON error shape as everything else. */
   app.use("/api", (_req: Request, res: Response) => {

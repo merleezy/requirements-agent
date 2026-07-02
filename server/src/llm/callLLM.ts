@@ -20,6 +20,11 @@ import {
   reviseLocalPrompt,
   parseReviseLocalOutput,
 } from "../agents/reviseLocal.ts";
+import {
+  buildReviseGlobalUserMessage,
+  reviseGlobalPrompt,
+  parseReviseGlobalOutput,
+} from "../agents/reviseGlobal.ts";
 
 /*
  * The one function that talks to OpenRouter (spec: "No LLM call is ever
@@ -49,6 +54,11 @@ interface AgentDefinition<I, O> {
  * step (spec pipeline stage 5), pulled forward from the original step-9
  * plan only for revise_local (see CLAUDE.md "Current stage"). */
 const agents = {
+  revise_global: {
+    prompt: reviseGlobalPrompt,
+    buildUserMessage: buildReviseGlobalUserMessage,
+    parseOutput: parseReviseGlobalOutput,
+  },
   clarify: {
     prompt: clarifyPrompt,
     buildUserMessage: buildClarifyUserMessage,

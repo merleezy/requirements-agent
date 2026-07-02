@@ -65,6 +65,14 @@ export interface Requirement {
 }
 
 export interface PRD {
+  /* Document version, introduced by the revise loop at step 9: the draft
+   * starts at 1, each applied global revision bumps it by one. */
+  version: number;
+  /* Monotonic counter for server-assigned requirement ids (FR-n). It only
+   * ever increases, so an id removed by a revision is never reissued to a
+   * new requirement - annotations and agent runs that referenced the old id
+   * would otherwise silently point at an unrelated requirement. */
+  nextRequirementNumber: number;
   /* One-sentence subtitle from the draft agent (prompt revision 2026-07-01);
    * the document title lives on Project. */
   summary: string;

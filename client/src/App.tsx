@@ -5,7 +5,7 @@ import { HomePage } from "./components/HomePage";
 import { PRDDocument } from "./components/PRDDocument";
 import { SettingsPage } from "./components/SettingsPage";
 import { TopBar } from "./components/TopBar";
-import { chatChips } from "./data/samplePrd";
+import { deriveChatChips } from "./state/chips";
 import {
   continueClarify,
   startClarify,
@@ -26,6 +26,7 @@ import {
   submitRevisionFeedback,
   type ReviseLocalResult,
 } from "./state/reviseLocal";
+import { sendGlobalFeedback } from "./state/reviseGlobal";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD, PrdItem, Requirement } from "./types";
 
@@ -57,8 +58,10 @@ type Action =
   | { type: "loadPrd"; prd: PRD }
   | { type: "applyCritique"; checks: (RequirementCheck & { checkedText: string })[] }
   | { type: "applyRevision"; requirements: Requirement[]; outOfScope: PrdItem[] }
+  | { type: "applyGlobalRevision"; prd: PRD }
   | { type: "agentChat"; text: string }
   | { type: "addComment"; targetId: string; text: string }
+  | { type: "addAgentComment"; targetId: string; text: string }
   | { type: "sendChat"; text: string }
   | { type: "optimisticAcceptRewrite"; id: string; text: string }
   | { type: "optimisticConfirmJudgment"; id: string }
@@ -119,11 +122,33 @@ function reducer(state: AppState, action: Action): AppState {
           outOfScope: action.outOfScope,
         },
       };
+    case "applyGlobalRevision":
+      /* Wholesale replace: a global pass can touch any section, and the
+       * server state is authoritative and cumulative, so applying the full
+       * returned PRD converges even if a local revision was in flight.
+       * Comments keyed by now-removed ids simply stop rendering. */
+      return { ...state, prd: action.prd };
     case "addComment": {
       const comment: Comment = {
         id: crypto.randomUUID(),
         author: "You",
         role: "user",
+        text: action.text,
+        time: "now",
+      };
+      return {
+        ...state,
+        comments: {
+          ...state.comments,
+          [action.targetId]: [...(state.comments[action.targetId] ?? []), comment],
+        },
+      };
+    }
+    case "addAgentComment": {
+      const comment: Comment = {
+        id: crypto.randomUUID(),
+        author: "Draftsmith",
+        role: "agent",
         text: action.text,
         time: "now",
       };
@@ -193,6 +218,29 @@ function critiqueSummary(
   return `${opening} I couldn't check ${refs} (${failures[0].message}) - ${failures.length === 1 ? "it stays" : "they stay"} unmarked.`;
 }
 
+/* Short section label for a section-item id, used to prefix the chat mirror
+ * of a comment (requirement targets use their REQ ref instead). */
+const SECTION_LABELS: Record<string, string> = {
+  ps: "Problem statement",
+  tu: "Target users",
+  g: "Goals",
+  oos: "Out of scope",
+  oq: "Open questions",
+};
+
+function sectionLabelFor(targetId: string): string {
+  if (targetId === "ps") return SECTION_LABELS.ps;
+  const prefix = targetId.split("-")[0];
+  return SECTION_LABELS[prefix] ?? "Document";
+}
+
+/* The display name a comment's chat mirror is prefixed with: a requirement's
+ * REQ ref when the target is a requirement, otherwise its section label. */
+function targetDisplayName(prd: PRD, targetId: string): string {
+  const req = prd.functionalRequirements.find((r) => r.id === targetId);
+  return req ? req.ref : sectionLabelFor(targetId);
+}
+
 export default function App() {
   const [state, dispatch] = useReducer(reducer, { prd: null, comments: {}, chat: [] });
   const [clarifyFlow, setClarifyFlow] = useState<ClarifyFlow | null>(null);
@@ -217,6 +265,12 @@ export default function App() {
    * resolved and how - not just an unused feedback box. */
   const [revisingIds, setRevisingIds] = useState<ReadonlySet<string>>(new Set());
   const [unresolvedMessages, setUnresolvedMessages] = useState<Record<string, string>>({});
+
+  /* The global revise loop runs one whole-document feedback call at a time
+   * (chat send or a section/requirement comment). While it's in flight the
+   * chat panel shows a pending bubble and blocks further sends; comment
+   * posts are blocked in the handlers below with a chat notice. */
+  const [chatBusy, setChatBusy] = useState(false);
 
   async function runRevision(
     id: string,
@@ -314,6 +368,64 @@ export default function App() {
       });
     }
   }
+
+  /* The global revise loop, shared by the chat box and by section/
+   * requirement comments. The user-role chat mirror is dispatched by the
+   * caller (it differs: raw text for chat, a target-prefixed line for a
+   * comment); this runs the call, applies the authoritative PRD, reports
+   * the summary, optionally echoes it into the originating comment thread,
+   * and re-checks changed/new requirements with the background critic. */
+  async function runGlobalFeedback(
+    feedback: string,
+    targetId: string | undefined,
+    commentTargetId?: string,
+  ) {
+    setChatBusy(true);
+    try {
+      const { prd, summary, recheckIds } = await sendGlobalFeedback(feedback, targetId, apiKey);
+      dispatch({ type: "applyGlobalRevision", prd });
+      dispatch({ type: "agentChat", text: summary });
+      if (commentTargetId) {
+        dispatch({ type: "addAgentComment", targetId: commentTargetId, text: summary });
+      }
+      if (recheckIds.length > 0) {
+        const textMap = new Map(
+          prd.functionalRequirements
+            .filter((r) => recheckIds.includes(r.id))
+            .map((r) => [r.id, r.text]),
+        );
+        void runBackgroundCritic(recheckIds, textMap);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      dispatch({ type: "agentChat", text: `I couldn't apply that feedback (${message}).` });
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
+  const handleSendChat = (text: string) => {
+    dispatch({ type: "sendChat", text });
+    void runGlobalFeedback(text, undefined);
+  };
+
+  const handleAddComment = (targetId: string, feedback: string) => {
+    const currentPrd = stateRef.current.prd;
+    /* A global pass is already running; keep the comment local and tell the
+     * user why nothing came back, rather than queueing a second call. */
+    if (chatBusy) {
+      dispatch({ type: "addComment", targetId, text: feedback });
+      dispatch({
+        type: "agentChat",
+        text: "I'm still applying the last change - post that comment again once I'm done.",
+      });
+      return;
+    }
+    dispatch({ type: "addComment", targetId, text: feedback });
+    const name = currentPrd ? targetDisplayName(currentPrd, targetId) : targetId;
+    dispatch({ type: "sendChat", text: `[${name}] ${feedback}` });
+    void runGlobalFeedback(feedback, targetId, targetId);
+  };
 
   const handleAcceptRewrite = (id: string) => {
     const currentPrd = stateRef.current.prd;
@@ -515,7 +627,7 @@ export default function App() {
               <PRDDocument
                 prd={state.prd}
                 comments={state.comments}
-                onAddComment={(targetId, text) => dispatch({ type: "addComment", targetId, text })}
+                onAddComment={handleAddComment}
                 onAcceptRewrite={handleAcceptRewrite}
                 onSubmitFeedback={handleSubmitFeedback}
                 onConfirmJudgment={handleConfirmJudgment}
@@ -527,8 +639,9 @@ export default function App() {
             </div>
             <ChatPanel
               messages={state.chat}
-              chips={chatChips}
-              onSend={(text) => dispatch({ type: "sendChat", text })}
+              chips={deriveChatChips(state.prd)}
+              busy={chatBusy}
+              onSend={handleSendChat}
             />
           </div>
         </>

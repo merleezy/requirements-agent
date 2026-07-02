@@ -183,7 +183,25 @@ Decisions made at step 8, flagged per the rule above:
   In the UI a preset click only fills the dropdowns; nothing applies until Save (spec: "Saving writes to this config object in session state").
 - Unit tests landed with it (the `modelConfig` piece of the testing exception): `parseModelConfig` validation, preset coverage, and the models-list cache (parse/filter, cache hit, stale-on-failure) with stubbed global `fetch`.
 
-Next: build-order step 9 - annotation → revise loop.
+Step 9 (annotation → revise-global loop) landed.
+`server/src/agents/reviseGlobal.ts` (verbatim prompt including its trailing NOTE paragraph), a `revise_global` registry entry, and `POST /api/revise-global` (`{ feedback, targetId? }`), which applies the model's diff to the session PRD server-side.
+On the client: chat sends and item comments both run the global loop (`client/src/state/reviseGlobal.ts`), Draftsmith replies land in chat (and in the originating comment thread), and the background critic re-checks whatever the pass touched.
+Decisions made at step 9, flagged per the rule above:
+
+- Comments and chat are one mechanism: both go through `revise_global`; a comment just carries a `targetId` (a requirement id or one of the client's deterministic section-item ids, which the server re-derives positionally) that the user-message builder describes to the model.
+  An `Annotation` (`A-n`, server-assigned) is recorded only for targeted comments, with `agentResponse` = the summary and `resolved` = whether anything was applied.
+- The revise-global user message includes the original idea text - the prompt's "grounded in the idea/goals/feedback" rule is unjudgeable without it (same rationale as the critic revision of 2026-07-01).
+- The revise-global prompt has no prose reply field and prompts are used verbatim, so Draftsmith's reply is a server-built deterministic diff summary (updated/added/removed ids, rewritten sections), returned as `summary` and reused for the annotation.
+- Versioning: the server PRD gained `version` (draft = 1); an applied global pass bumps it, local revisions deliberately don't. The client renders `Draft v{n}`.
+- The server PRD also gained `nextRequirementNumber`, a monotonic counter for new `FR-n` ids, so an id removed by a revision is never reissued to a different requirement (annotations/agent runs referencing the old id would silently repoint otherwise).
+- Applying the diff is tolerant of model noise: unknown changed/removed ids are skipped silently (a hallucinated id must not fail the pass); multi-line `revisedText` splits into `${id}.1`-style sub-ids exactly like revise-local; a non-null `otherSectionChanges` field is a full replacement, and an empty array is valid ("clear the section").
+- The critic re-check after a global pass is client-triggered in the background over `changedRequirementIds + newRequirementIds` (same responsiveness decision as revise-local; the route stays fast).
+- One global pass runs at a time: `chatBusy` disables the chat input/chips and shows a pending bubble; a comment posted mid-flight stays local with a chat notice asking to repost.
+- Chat chips are deterministic client-side derivations (`client/src/state/chips.ts`): up to 3 "Make a call on: ..." chips handing an open question back to Draftsmith (the sent message explicitly delegates the judgment), or one generic tighten-wording chip when none are open. Chips are `{ label, message }` - short label, fuller sent text.
+- The full server→client PRD mapping (`toClientPrd`) moved into `client/src/state/prdMapping.ts`, shared by draft and revise-global.
+- Route tests drive a real express app on an ephemeral port with global fetch stubbed only for the OpenRouter URL; UI verification stubbed the four LLM-backed `/api` endpoints in the page and exercised the full document flow in the browser without a key.
+
+Next: build-order step 10 - export (PRD → Markdown / JSON, gated on the critic rubric).
 
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.

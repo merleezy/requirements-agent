@@ -64,6 +64,8 @@ export function draftRouter(store: SessionStore): Router {
  * at step 7. */
 function toPrd(output: DraftOutput): PRD {
   return {
+    version: 1,
+    nextRequirementNumber: output.functionalRequirements.length + 1,
     summary: output.summary,
     problemStatement: output.problemStatement,
     targetUsers: output.targetUsers,
