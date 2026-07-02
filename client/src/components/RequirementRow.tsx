@@ -1,20 +1,11 @@
 import { useState } from "react";
-import type { Comment, Requirement } from "../types";
+import type { Requirement } from "../types";
 import { Button } from "./Button";
-import { CommentThread } from "./CommentThread";
 import { DimensionTag } from "./DimensionTag";
 
 /*
  * One functional requirement: ref + text (with the flagged span dotted-
- * underlined), the critic flag callout when present, and a comment thread.
- *
- * Defect flags (unambiguous/atomic/testable) resolve through the local
- * revise loop: Accept rewrite applies the critic's own suggestion verbatim,
- * and "That's not quite it" opens a feedback box for cases where the
- * suggestion misses what the user actually meant - or where the critic
- * proposed no rewrite at all (an unresolved-ambiguity flag has none by
- * design). Judgment flags (scoped/traceable) never get a rewrite; the user
- * is only confirming intent, so those stay a plain Accept/Move choice.
+ * underlined), the critic flag callout when present.
  */
 
 export interface FlagActions {
@@ -22,6 +13,7 @@ export interface FlagActions {
   onSubmitFeedback: (id: string, feedback: string) => void;
   onConfirmJudgment: (id: string) => void; /* Accept as-is anyway (judgment only) */
   onMoveToOutOfScope: (id: string) => void;
+  onApplySuggestion: (id: string) => void;
 }
 
 function HighlightedText({ text, highlight, nature }: {
@@ -45,8 +37,6 @@ function HighlightedText({ text, highlight, nature }: {
 
 interface RequirementRowProps extends FlagActions {
   requirement: Requirement;
-  comments: Comment[];
-  onAddComment: (targetId: string, text: string) => void;
   /* True while this row's revise-local call is in flight. */
   busy?: boolean;
   /* Set when the last feedback submission couldn't be resolved (the
@@ -56,12 +46,11 @@ interface RequirementRowProps extends FlagActions {
 
 export function RequirementRow({
   requirement: r,
-  comments,
-  onAddComment,
   onAcceptRewrite,
   onSubmitFeedback,
   onConfirmJudgment,
   onMoveToOutOfScope,
+  onApplySuggestion,
   busy = false,
   unresolvedMessage = null,
 }: RequirementRowProps) {
@@ -155,6 +144,13 @@ export function RequirementRow({
           )}
           {flag.nature === "judgment" && (
             <div className="mt-[9px] flex flex-wrap gap-2.5">
+              <Button
+                variant="primary"
+                disabled={busy}
+                onClick={() => onApplySuggestion(r.id)}
+              >
+                {busy ? "Applying…" : "Apply suggestion"}
+              </Button>
               <Button variant="judgment" disabled={busy} onClick={() => onConfirmJudgment(r.id)}>
                 {busy ? "Confirming…" : "Accept as-is anyway"}
               </Button>
@@ -170,9 +166,7 @@ export function RequirementRow({
         </div>
       )}
 
-      <div className="mt-2 pl-[78px]">
-        <CommentThread comments={comments} onSubmit={(text) => onAddComment(r.id, text)} />
-      </div>
+      {/* Requirement Text & Flags */}
     </div>
   );
 }

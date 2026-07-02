@@ -29,8 +29,8 @@ Produce a PRD with exactly these fields:
 - goals: array of goal statements (outcomes, not features).
 - functionalRequirements: array of individual requirement objects (see shape below).
 - outOfScope: array of short statements — things this project explicitly will NOT do.
-- openQuestions: array of things you could not resolve even with the clarifying
-  answers, and that the user should decide.
+- openQuestions: array of short, concise questions (10-15 words max each) on things
+  you could not resolve even with the clarifying answers, and that the user should decide.
 
 Rules for functionalRequirements — this is the section a separate critic will
 check line by line, so follow these strictly:

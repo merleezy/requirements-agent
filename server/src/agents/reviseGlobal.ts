@@ -161,21 +161,19 @@ function parseChangedRequirements(
   if (!Array.isArray(value)) {
     throw new Error("revise-global output: changedRequirements must be an array");
   }
-  return value.map((entry) => {
-    if (typeof entry !== "object" || entry === null) {
-      throw new Error("revise-global output: each changedRequirement must be an object");
-    }
+  const results: { id: string; revisedText: string }[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "object" || entry === null) continue;
     const e = entry as Record<string, unknown>;
-    if (typeof e.id !== "string" || e.id.trim().length === 0) {
-      throw new Error("revise-global output: changedRequirement.id must be a non-empty string");
-    }
-    if (typeof e.revisedText !== "string" || e.revisedText.trim().length === 0) {
-      throw new Error(
-        "revise-global output: changedRequirement.revisedText must be a non-empty string",
-      );
-    }
-    return { id: e.id.trim(), revisedText: e.revisedText.trim() };
-  });
+    const id = typeof e.id === "string" ? e.id.trim() : "";
+    const revisedText = typeof e.revisedText === "string" ? e.revisedText.trim() : "";
+    /* Skip entries the model emitted with blank id or text rather than
+     * failing the entire pass - a hallucinated or partial entry should not
+     * prevent an otherwise-valid diff from being applied. */
+    if (id.length === 0 || revisedText.length === 0) continue;
+    results.push({ id, revisedText });
+  }
+  return results;
 }
 
 function parseNewRequirements(value: unknown): { text: string }[] {

@@ -90,13 +90,13 @@ export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
             </div>
           </div>
         )}
-        <div className="mt-1.5 flex flex-wrap gap-[7px]">
+        <div className="mt-1.5 flex flex-col gap-2">
           {chips.map((chip) => (
             <button
               key={chip.label}
               onClick={() => send(chip.message)}
               disabled={busy}
-              className="cursor-pointer rounded-[14px] border border-line-400 bg-white px-3 py-1.5 text-[11px] font-medium text-ink-800 hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-45"
+              className="cursor-pointer rounded-lg border border-line-400 bg-white px-3 py-2 text-left font-sans text-[11.5px] leading-[1.45] text-ink-800 transition-colors hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-45 break-words"
             >
               {chip.label}
             </button>

@@ -128,24 +128,22 @@ test("parser accepts an empty array as a section (full-replacement clear)", () =
   assert.deepEqual(output.otherSectionChanges.outOfScope, []);
 });
 
-test("parser rejects a non-string changedRequirement id", () => {
-  assert.throws(() =>
-    parseReviseGlobalOutput({
-      changedRequirements: [{ id: 5, revisedText: "text" }],
-      newRequirements: [],
-      removedRequirementIds: [],
-    }),
-  );
+test("parser skips a non-string changedRequirement id", () => {
+  const output = parseReviseGlobalOutput({
+    changedRequirements: [{ id: 5, revisedText: "text" }],
+    newRequirements: [],
+    removedRequirementIds: [],
+  });
+  assert.deepEqual(output.changedRequirements, []);
 });
 
-test("parser rejects a changedRequirement missing revisedText", () => {
-  assert.throws(() =>
-    parseReviseGlobalOutput({
-      changedRequirements: [{ id: "FR-1" }],
-      newRequirements: [],
-      removedRequirementIds: [],
-    }),
-  );
+test("parser skips a changedRequirement missing revisedText", () => {
+  const output = parseReviseGlobalOutput({
+    changedRequirements: [{ id: "FR-1" }],
+    newRequirements: [],
+    removedRequirementIds: [],
+  });
+  assert.deepEqual(output.changedRequirements, []);
 });
 
 test("parser rejects otherSectionChanges with a wrong type", () => {

@@ -313,6 +313,7 @@ export default function App() {
   }
 
   async function runBackgroundCritic(ids: string[], textMap: Map<string, string>) {
+    setReviewing(true);
     setRevisingIds((s) => {
       const next = new Set(s);
       ids.forEach((id) => next.add(id));
@@ -361,6 +362,7 @@ export default function App() {
       const msg = err instanceof Error ? err.message : String(err);
       dispatch({ type: "agentChat", text: `Background check failed: ${msg}` });
     } finally {
+      setReviewing(false);
       setRevisingIds((s) => {
         const next = new Set(s);
         ids.forEach((id) => next.delete(id));
@@ -477,6 +479,21 @@ export default function App() {
     dispatch({ type: "agentChat", text: `Moved **${ref}** to Out of Scope.` });
 
     void runRevision(id, () => moveRequirementToOutOfScope(id, apiKey), []);
+  };
+
+  const handleApplySuggestion = (id: string) => {
+    const currentPrd = stateRef.current.prd;
+    const req = currentPrd?.functionalRequirements.find((r) => r.id === id);
+    if (!req || !req.flag) return;
+    const ref = req.ref;
+    const reason = req.flag.reason ?? "";
+
+    dispatch({ type: "optimisticConfirmJudgment", id });
+    dispatch({ type: "sendChat", text: `Apply suggestion for ${ref}` });
+    dispatch({ type: "agentChat", text: `Applying recommendation for **${ref}**…` });
+
+    const instruction = `Requirement ${ref} ("${req.text}") was flagged (${req.flag.dimension}): "${reason}". Update the PRD context or goals accordingly to ground this requirement.`;
+    void runGlobalFeedback(instruction, id);
   };
 
   async function runDraft(ideaText: string, pairs: ClarificationPair[]) {
@@ -632,6 +649,7 @@ export default function App() {
                 onSubmitFeedback={handleSubmitFeedback}
                 onConfirmJudgment={handleConfirmJudgment}
                 onMoveToOutOfScope={handleMoveToOutOfScope}
+                onApplySuggestion={handleApplySuggestion}
                 revisingIds={revisingIds}
                 unresolvedMessages={unresolvedMessages}
                 reviewing={reviewing}
