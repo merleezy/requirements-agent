@@ -54,7 +54,7 @@ See the "Code organization" section of the spec for the full reasoning - this is
 
 ## Current stage
 
-Build-order steps 1, 2, and 3 are done.
+Build-order steps 1-4 are done.
 
 Step 1 (Tailwind theme): tokens extracted from the design reference into `client/src/theme.css`, plus base components (`Button`, `SectionHeading`, `DimensionTag`).
 
@@ -65,6 +65,9 @@ Client-side types in `client/src/types.ts` mirror the spec's data model and crit
 Step 3 (Express backend skeleton + session state): standalone `server/` npm package (Express 5 + TypeScript), following the spec's suggested `/server` layout (`src/llm/modelConfig.ts`, `src/routes/`, `src/session/`, `src/types.ts`; `src/agents/` and `callLLM` arrive at step 5).
 Routes so far: `GET /api/health`, `POST /api/session` (create), `GET /api/session` (fetch state).
 In `server/`, `npm run dev` starts the server on port 3001 with `--watch`, and `npm run build` runs the type check; `.claude/launch.json` has a matching `server` entry.
+
+Step 4 (home page + API key onboarding): `HomePage` component (idea textarea, BYOK key input with the spec's trust-signal copy, Start-drafting CTA), plus the client session layer in `client/src/state/` (`api.ts` fetch wrapper, `session.ts` with `useServerSession`/`useApiKey`).
+The client now bootstraps a server session on load and recovers transparently when a stored session id has expired.
 
 Decisions made so far, flagged per the rule above:
 
@@ -82,8 +85,15 @@ Decisions made so far, flagged per the rule above:
 - API errors all use one shape, `{ error: { code, message } }`; the Express error handler logs only the error itself, never the request (headers will carry the user's key from step 5 on).
 - Server types (`server/src/types.ts`) deliberately duplicate the client's data-model types rather than sharing a package; revisit sharing when the API contract firms up at step 5.
 - Dev servers stay separate origins: Vite (5173) proxies `/api` to Express (3001) via `server.proxy` in `client/vite.config.ts`, so client code uses same-origin paths.
+- No client-side router: the app is a linear, session-scoped pipeline, so `App` switches views (`home` vs `document`) with plain state; revisit only if deep-linking ever matters.
+- All client requests go through `client/src/state/api.ts`, which owns the `x-session-id` header and the server's uniform error shape - components never call `fetch` directly.
+- Session bootstrap (`client/src/state/session.ts`): restore the id from `sessionStorage` and GET the session, fall back to POST-create on 404/absence; the bootstrap promise is memoized so StrictMode's double effect can't create two server sessions.
+- The API key is held via `useApiKey` in `sessionStorage` (`ra.openrouterKey`), write-through on change, never `localStorage` - per the spec it will be attached per-request only at step 5.
+- The home page extrapolates the document card's design (paper-tint masthead, numbered `SectionHeading` sections, mono kickers); "Draftsmith" (previously just the chat agent's name) doubles as the app wordmark.
+- "Start drafting" requires a non-empty idea, a key, and a reachable backend; until step 5 it shows the hardcoded sample PRD as a stand-in and just holds the idea text in state.
+- `Button` gained a `cta` size and shared disabled styling (`opacity-45`, no pointer events).
 
-Next: build-order step 4 - home page (idea input) + API key onboarding.
+Next: build-order step 5 - draft agent (idea → PRD) wired end to end through `callLLM`.
 
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.

@@ -1,14 +1,19 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { ChatPanel } from "./components/ChatPanel";
+import { HomePage } from "./components/HomePage";
 import { PRDDocument } from "./components/PRDDocument";
 import { TopBar } from "./components/TopBar";
 import { chatChips, samplePrd, seedChat, seedComments } from "./data/samplePrd";
+import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD } from "./types";
 
 /*
- * Build-order step 2: the full PRD document view over a hardcoded PRD.
- * All interactions (flag resolution, comments, chat) mutate local state
- * only; agents and backend arrive in later steps.
+ * Steps 2 + 4: home page (idea input + key onboarding) in front of the PRD
+ * document view. The app is a linear session-scoped pipeline, so views are
+ * switched with plain state, not a router. Until the draft agent lands
+ * (step 5), starting a project shows the hardcoded sample PRD as a stand-in
+ * and the idea text is only held in state; document interactions still
+ * mutate local state only.
  */
 
 interface AppState {
@@ -100,30 +105,45 @@ export default function App() {
     comments: seedComments,
     chat: seedChat,
   });
+  /* null = no project started yet (home view). Sent to the draft agent at step 5. */
+  const [ideaText, setIdeaText] = useState<string | null>(null);
+  const { error: backendError } = useServerSession();
+  const [apiKey, setApiKey] = useApiKey();
 
   const flagCount = state.prd.functionalRequirements.filter((r) => r.flag).length;
 
   return (
     /* Desktop-first per the design reference; below 1080px the page scrolls horizontally */
     <div className="flex h-screen min-w-[1080px] flex-col bg-canvas">
-      <TopBar title="Receipt Capture" version={state.prd.version} flagCount={flagCount} />
-      <div className="flex min-h-0 flex-1">
-        <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">
-          <PRDDocument
-            prd={state.prd}
-            comments={state.comments}
-            onAddComment={(targetId, text) => dispatch({ type: "addComment", targetId, text })}
-            onAcceptRewrite={(id) => dispatch({ type: "acceptRewrite", id })}
-            onDismissFlag={(id) => dispatch({ type: "dismissFlag", id })}
-            onMoveToOutOfScope={(id) => dispatch({ type: "moveToOutOfScope", id })}
-          />
-        </div>
-        <ChatPanel
-          messages={state.chat}
-          chips={chatChips}
-          onSend={(text) => dispatch({ type: "sendChat", text })}
+      {ideaText === null ? (
+        <HomePage
+          apiKey={apiKey}
+          onApiKeyChange={setApiKey}
+          backendError={backendError}
+          onStart={setIdeaText}
         />
-      </div>
+      ) : (
+        <>
+          <TopBar title="Receipt Capture" version={state.prd.version} flagCount={flagCount} />
+          <div className="flex min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">
+              <PRDDocument
+                prd={state.prd}
+                comments={state.comments}
+                onAddComment={(targetId, text) => dispatch({ type: "addComment", targetId, text })}
+                onAcceptRewrite={(id) => dispatch({ type: "acceptRewrite", id })}
+                onDismissFlag={(id) => dispatch({ type: "dismissFlag", id })}
+                onMoveToOutOfScope={(id) => dispatch({ type: "moveToOutOfScope", id })}
+              />
+            </div>
+            <ChatPanel
+              messages={state.chat}
+              chips={chatChips}
+              onSend={(text) => dispatch({ type: "sendChat", text })}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

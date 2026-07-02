@@ -10,7 +10,8 @@ type ButtonVariant =
 type ButtonSize =
   | "xs" /* flag actions, Export */
   | "post" /* comment-well Post */
-  | "send"; /* chat panel Send */
+  | "send" /* chat panel Send */
+  | "cta"; /* page-level primary action, e.g. Start drafting */
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
@@ -27,6 +28,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   xs: "text-[11px] rounded px-2.5 py-1",
   post: "text-[10.5px] rounded-[5px] px-2.5 py-[5px]",
   send: "text-[11px] rounded-md px-3 py-[7px]",
+  cta: "text-[12.5px] rounded-md px-4 py-2",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -42,7 +44,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`cursor-pointer font-mono font-semibold ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      className={`cursor-pointer font-mono font-semibold disabled:pointer-events-none disabled:opacity-45 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       {...rest}
     />
   );
