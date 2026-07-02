@@ -24,6 +24,17 @@ What counts as worth asking about:
   single-user? what platform?)
 - A term that implies a decision without stating it (e.g. "organize bookmarks"
   could imply search, tagging, sorting, or all three — which did they mean?)
+- Whether this is a brand-new product or a feature/change being added to
+  something that already exists. Always ask this if it isn't already clear —
+  never assume greenfield. If it's an addition to an existing product, also
+  ask enough about that product's current users and functionality to ground
+  the new requirements in real context (e.g. "add authentication" needs to
+  know who the existing users are and what, if anything, already gates access
+  today), so the draft agent isn't writing generic advice.
+- For an idea broad enough that its core scope isn't decidable at all yet
+  (a one-line idea with no stated users, platform, or feature boundary — e.g.
+  "an app that checks the weather") ask about the handful of decisions that
+  most determine what gets built, not just the first ambiguity you notice.
 
 What does NOT count as worth asking about:
 - Implementation details (database choice, framework, hosting) — not your job
@@ -32,7 +43,17 @@ What does NOT count as worth asking about:
 - Anything that a later, more specific requirement could clarify on its own
 
 Rules:
-- Ask no more than 5 questions. Fewer, sharper questions beat many shallow ones.
+- Ask as few questions as the idea's actual ambiguity requires — most ideas
+  that already state a rough feature set need only 2-4. Ask more only when
+  the idea is genuinely this vague, up to a hard ceiling of 8.
+- Never pad the list to look thorough, and never stop early just to stay under
+  the ceiling. If you hit 8 and real ambiguity remains, stop anyway — do not
+  guess to make the list shorter. Unasked ambiguity is not lost: the original
+  idea still reaches the draft agent, which is required to avoid inventing
+  unstated specifics and to surface anything still unresolved in its
+  openQuestions section, and the critic re-checks every requirement afterward.
+  Your job is to resolve what can be resolved with a few sharp questions, not
+  to eliminate every downstream ambiguity yourself.
 - Each question must be answerable in one sentence.
 - Do not ask yes/no questions where the answer doesn't change scope.
 - If the idea is already unambiguous and complete enough to draft from, return an
@@ -281,3 +302,13 @@ self-check them.
   The scoped dimension judges whether a requirement is "grounded in the original idea", which was unjudgeable without it.
 - Revise (local): pinned down that exactly one of `revisedText`/`unresolved` is non-null, and adopted the same one-per-line split encoding.
 - Revise (global): `otherSectionChanges` gained the missing `targetUsers` section, and non-null sections are now explicitly full replacements rather than deltas.
+
+2026-07-01 - second pass, made ahead of build-order step 6 (clarify agent) and approved by Isaac. Motivated by wanting clarify to genuinely help scope out vague ideas (e.g. "an app that checks the weather") and vague feature requests against an existing product (e.g. "add authentication to my app"), not just resolve stated ambiguity:
+
+- Clarify: added a rule to always ask whether the idea is a new product or an addition to something existing when that isn't already clear, and - if existing - to ask enough about the existing product's users/functionality to ground new requirements in real context instead of generic advice.
+  There is deliberately no separate "connect your project" mechanism for v1 - reading an actual codebase is already parked as a v2+ idea in the spec, so this has to be a clarifying question for now.
+- Clarify: added a rule to ask about the handful of most scope-determining decisions (not just the first ambiguity noticed) when an idea is broad enough that its core scope isn't decidable yet.
+- Clarify: replaced the flat "no more than 5 questions" cap with a scaling rule - most ideas need only 2-4, genuinely vague ideas can go up to a hard ceiling of 8 - plus explicit anti-padding (don't invent questions to hit a number) and anti-early-stop (don't guess just to stay under the ceiling) guidance.
+  Reasoning for not removing the cap entirely: an unbounded clarifier risks turning the Q&A step into an interrogation, which hurts the exact "quick to get going" UX the product wants.
+  Reasoning for not leaving it at a flat cap: a single line like "an app that checks the weather" has enough real scope decisions (platform, single vs. multi-location, current conditions vs. forecast, alerts, offline behavior, new-vs-existing) to run past 5 without any padding.
+  The guidance also makes explicit what was previously only implicit: unasked ambiguity isn't silently lost, because the draft agent already must avoid inventing unstated specifics and must surface anything unresolved in `openQuestions`, and the critic re-checks every requirement afterward - clarify only needs to resolve what a few sharp questions can, not every ambiguity in the pipeline.

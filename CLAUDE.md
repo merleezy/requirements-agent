@@ -112,6 +112,9 @@ Decisions made so far, flagged per the rule above:
   Load-bearing consequences for later steps: models never mint ids (the server assigns them, including clarify question ids at step 6 and new-requirement ids at step 9); atomic splits arrive one-requirement-per-line in `suggestedRewrite`/`revisedText`, so steps 7/9 split on newlines; the critic's user message must include the original idea; revise-global's `otherSectionChanges` covers all five non-requirement sections with full-replacement semantics.
 - After a draft, the chat seeds one locally-generated Draftsmith greeting (deterministic, not an LLM reply) stating the requirement count; real chat replies arrive with revise-global.
 - Server unit tests run via `node --test 'src/**/*.test.ts'` (Node's built-in runner on natively-stripped TS, no test deps); `fetch` is stubbed at the global level.
+- Clarify prompt revised again on 2026-07-01, ahead of step 6, per a second user-approved pass (see `docs/agent-prompts.md` Revisions): it must always ask new-product-vs-existing-product when unclear, and (if existing) ask enough about the existing product to ground new requirements in real context - there is no repo-connection mechanism in v1, so this is the only lever available.
+  The flat 5-question cap became a scaling rule (2-4 typical, hard ceiling of 8 for genuinely vague ideas) with explicit anti-padding/anti-early-stop language.
+  Load-bearing consequence for step 6: the clarify Q&A view needs to comfortably support more than 5 questions in the UI, and answers should be sent back to `revise`/`draft` paired with question *text*, not ids, since the server owns question identity (models mint no ids per the first revision pass).
 
 Next: build-order step 6 - clarify agent + clarifying Q&A view (prepend the question round-trip before drafting).
 
