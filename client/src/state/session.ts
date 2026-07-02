@@ -20,6 +20,7 @@ const API_KEY_KEY = "ra.openrouterKey";
 export interface ServerSessionState {
   sessionId: string;
   createdAt: string;
+  clarify: unknown;
   project: unknown | null;
   prd: unknown | null;
   annotations: unknown[];

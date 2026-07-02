@@ -1,20 +1,37 @@
 import { useReducer, useState } from "react";
 import { ChatPanel } from "./components/ChatPanel";
+import { ClarifyView } from "./components/ClarifyView";
 import { HomePage } from "./components/HomePage";
 import { PRDDocument } from "./components/PRDDocument";
 import { TopBar } from "./components/TopBar";
 import { chatChips } from "./data/samplePrd";
+import {
+  continueClarify,
+  startClarify,
+  type ClarificationPair,
+  type ClarifyQuestion,
+} from "./state/clarify";
 import { startDraft } from "./state/draft";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD } from "./types";
 
 /*
- * Step 5: the home page hands the idea to the real draft agent
- * (POST /api/draft through callLLM) and the document view renders the
- * returned PRD - the sample PRD is no longer shown. Document interactions
- * (comments, flag actions, chat) still mutate local state only; they sync
- * to the server with the critic (step 7) and annotation loop (step 9).
+ * Steps 5-6: starting from the home page runs clarify round 1; if it asks
+ * nothing the draft runs immediately, otherwise the ClarifyView collects
+ * answers, an automatic round-2 check may add follow-ups (2 rounds max,
+ * server-enforced), and then the draft agent writes the PRD the document
+ * view renders. Document interactions (comments, flag actions, chat) still
+ * mutate local state only; they sync to the server with the critic (step 7)
+ * and annotation loop (step 9).
  */
+
+/* The in-flight clarify round-trip (between home and document views). */
+interface ClarifyFlow {
+  ideaText: string;
+  round: number; /* which round `questions` belongs to */
+  questions: ClarifyQuestion[]; /* the current round's questions */
+  priorPairs: ClarificationPair[]; /* round-1 Q&A, once round === 2 */
+}
 
 interface AppState {
   prd: PRD | null; /* null = no project yet (home view) */
@@ -118,21 +135,57 @@ function reducer(state: AppState, action: Action): AppState {
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, { prd: null, comments: {}, chat: [] });
-  const [drafting, setDrafting] = useState(false);
-  const [draftError, setDraftError] = useState<string | null>(null);
+  const [clarifyFlow, setClarifyFlow] = useState<ClarifyFlow | null>(null);
+  const [busy, setBusy] = useState<"clarify" | "check" | "draft" | null>(null);
+  const [pipelineError, setPipelineError] = useState<string | null>(null);
   const { error: backendError } = useServerSession();
   const [apiKey, setApiKey] = useApiKey();
 
+  async function runDraft(ideaText: string, pairs: ClarificationPair[]) {
+    setBusy("draft");
+    const prd = await startDraft(ideaText, pairs, apiKey);
+    dispatch({ type: "loadPrd", prd });
+    setClarifyFlow(null);
+  }
+
   async function handleStart(ideaText: string) {
-    setDrafting(true);
-    setDraftError(null);
+    setPipelineError(null);
+    setBusy("clarify");
     try {
-      const prd = await startDraft(ideaText, apiKey);
-      dispatch({ type: "loadPrd", prd });
+      const questions = await startClarify(ideaText, apiKey);
+      if (questions.length === 0) {
+        await runDraft(ideaText, []);
+      } else {
+        setClarifyFlow({ ideaText, round: 1, questions, priorPairs: [] });
+      }
     } catch (err) {
-      setDraftError(err instanceof Error ? err.message : String(err));
+      setPipelineError(err instanceof Error ? err.message : String(err));
     } finally {
-      setDrafting(false);
+      setBusy(null);
+    }
+  }
+
+  async function handleAnswers(pairs: ClarificationPair[]) {
+    if (!clarifyFlow) return;
+    setPipelineError(null);
+    try {
+      if (clarifyFlow.round === 1) {
+        /* Round 2 runs automatically on the round-1 answers; it usually
+         * returns nothing and the draft starts right away. */
+        setBusy("check");
+        const followUps = await continueClarify(pairs, apiKey);
+        if (followUps.length > 0) {
+          setClarifyFlow({ ...clarifyFlow, round: 2, questions: followUps, priorPairs: pairs });
+        } else {
+          await runDraft(clarifyFlow.ideaText, pairs);
+        }
+      } else {
+        await runDraft(clarifyFlow.ideaText, [...clarifyFlow.priorPairs, ...pairs]);
+      }
+    } catch (err) {
+      setPipelineError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -144,14 +197,25 @@ export default function App() {
     /* Desktop-first per the design reference; below 1080px the page scrolls horizontally */
     <div className="flex h-screen min-w-[1080px] flex-col bg-canvas">
       {state.prd === null ? (
-        <HomePage
-          apiKey={apiKey}
-          onApiKeyChange={setApiKey}
-          backendError={backendError}
-          drafting={drafting}
-          draftError={draftError}
-          onStart={handleStart}
-        />
+        clarifyFlow === null ? (
+          <HomePage
+            apiKey={apiKey}
+            onApiKeyChange={setApiKey}
+            backendError={backendError}
+            busy={busy === "check" ? null : busy /* "check" never occurs on home */}
+            error={pipelineError}
+            onStart={handleStart}
+          />
+        ) : (
+          <ClarifyView
+            key={clarifyFlow.round /* reset the answer inputs per round */}
+            round={clarifyFlow.round}
+            questions={clarifyFlow.questions}
+            busy={busy === "clarify" ? null : busy /* "clarify" never occurs here */}
+            error={pipelineError}
+            onSubmit={handleAnswers}
+          />
+        )
       ) : (
         <>
           <TopBar title={state.prd.title} version={state.prd.version} flagCount={flagCount} />

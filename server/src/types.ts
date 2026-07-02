@@ -9,6 +9,32 @@
  * workspace complexity.
  */
 
+/* One clarifying question and the user's answer, keyed by question TEXT, not
+ * id - the server owns question identity, so answers travel with the text
+ * they answer (decision 2026-07-01, see CLAUDE.md). An empty answer means
+ * the user skipped the question. */
+export interface ClarificationPair {
+  question: string;
+  answer: string;
+}
+
+/* A question the clarify agent asked, with its server-assigned id. */
+export interface ClarifyQuestion {
+  id: string; /* "CQ-1"... - assigned by the server, models mint no ids */
+  question: string;
+  whyItMatters: string;
+  round: number; /* 1 or 2; the clarify stage is capped at 2 rounds */
+}
+
+/* Session-side record of the clarify round-trip. Answers are NOT stored
+ * here - the client is their source of truth and sends them with each
+ * request that needs them (clarify round 2, draft). */
+export interface ClarifyState {
+  ideaText: string;
+  roundsUsed: number;
+  questions: ClarifyQuestion[]; /* all rounds, in ask order */
+}
+
 export type RubricDimension =
   | "unambiguous"
   | "atomic"

@@ -8,6 +8,9 @@
  * transport.
  */
 
+import type { ClarificationPair } from "../types.ts";
+import { formatClarifications } from "./clarifications.ts";
+
 export const draftPrompt = `You are the drafting agent in a requirements-gathering tool. You turn a clarified
 project idea into a structured PRD. You write for precision, not persuasion — this
 document will be checked line-by-line by a separate critic agent, so favor being
@@ -61,14 +64,10 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
   "openQuestions": [string]
 }`;
 
-export interface ClarificationPair {
-  question: string;
-  answer: string;
-}
-
 export interface DraftInput {
   ideaText: string;
-  /* Empty until the clarify agent lands (build-order step 6). */
+  /* The clarify stage's Q&A, paired by question text (blank answer = the
+   * user skipped that question). Empty when clarify asked nothing. */
   clarifications: ClarificationPair[];
 }
 
@@ -90,9 +89,7 @@ export function buildDraftUserMessage(input: DraftInput): string {
   const qa =
     input.clarifications.length === 0
       ? "(none)"
-      : input.clarifications
-          .map((c) => `Q: ${c.question}\nA: ${c.answer}`)
-          .join("\n\n");
+      : formatClarifications(input.clarifications);
   return `Project idea:\n${input.ideaText}\n\nClarifying questions and answers:\n${qa}`;
 }
 

@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Button } from "./Button";
 import { SectionHeading } from "./SectionHeading";
+import { Wordmark } from "./Wordmark";
 
 /*
  * Build-order step 4: the "no PRD yet" state - freeform idea input plus
  * BYOK key onboarding. No design reference exists for this page; it
  * extrapolates the PRD document card's language (masthead, numbered
- * sections, mono kickers) onto a single centered card.
+ * sections, mono kickers) onto a single centered card. Since step 6,
+ * starting runs the clarify agent first; the draft runs from here only
+ * when clarify asks nothing.
  */
 
 interface HomePageProps {
@@ -14,10 +17,10 @@ interface HomePageProps {
   onApiKeyChange: (key: string) => void;
   /* Non-null when the session bootstrap failed (e.g. server not running). */
   backendError: string | null;
-  /* True while the draft agent call is in flight. */
-  drafting: boolean;
-  /* Non-null when the last draft attempt failed (e.g. bad key, model error). */
-  draftError: string | null;
+  /* Which pipeline call is in flight while this page is visible. */
+  busy: "clarify" | "draft" | null;
+  /* Non-null when the last attempt failed (e.g. bad key, model error). */
+  error: string | null;
   onStart: (ideaText: string) => void;
 }
 
@@ -25,25 +28,18 @@ export function HomePage({
   apiKey,
   onApiKeyChange,
   backendError,
-  drafting,
-  draftError,
+  busy,
+  error,
   onStart,
 }: HomePageProps) {
   const [idea, setIdea] = useState("");
   const canStart =
-    idea.trim().length > 0 && apiKey.trim().length > 0 && !backendError && !drafting;
+    idea.trim().length > 0 && apiKey.trim().length > 0 && !backendError && !busy;
 
   return (
     <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
       <div className="w-full max-w-[640px]">
-        {/* Wordmark, echoing the chat panel's agent header */}
-        <div className="mb-5 flex items-center gap-[9px]">
-          <div className="flex h-[26px] w-[26px] items-center justify-center rounded-md bg-accent font-mono text-[10px] font-semibold text-white">
-            AI
-          </div>
-          <div className="font-display text-[13px] font-semibold text-ink-950">Draftsmith</div>
-          <div className="font-mono text-[10.5px] text-ink-400">requirements agent</div>
-        </div>
+        <Wordmark />
 
         <div className="overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
           {/* Masthead */}
@@ -107,17 +103,19 @@ export function HomePage({
               <div className="font-mono text-[10.5px] font-medium text-defect">
                 Backend unreachable - start the server, then reload.
               </div>
-            ) : draftError ? (
-              <div className="font-mono text-[10.5px] font-medium text-defect">
-                Draft failed: {draftError}
-              </div>
-            ) : drafting ? (
+            ) : error ? (
+              <div className="font-mono text-[10.5px] font-medium text-defect">{error}</div>
+            ) : busy === "clarify" ? (
               <div className="font-mono text-[10.5px] font-medium text-ink-400">
-                Draftsmith is writing the first draft - this can take a minute
+                Draftsmith is reading your idea and deciding what to ask…
+              </div>
+            ) : busy === "draft" ? (
+              <div className="font-mono text-[10.5px] font-medium text-ink-400">
+                Nothing to clarify - Draftsmith is writing the first draft
               </div>
             ) : (
               <div className="font-mono text-[10.5px] font-medium text-ink-400">
-                Next: PRD draft · nothing runs until you start
+                Next: clarifying questions · nothing runs until you start
               </div>
             )}
             <Button
@@ -127,7 +125,7 @@ export function HomePage({
               title={canStart ? undefined : "Enter an idea and your OpenRouter key first"}
               onClick={() => onStart(idea.trim())}
             >
-              {drafting ? "Drafting…" : "Start drafting"}
+              {busy === "draft" ? "Drafting…" : busy === "clarify" ? "Starting…" : "Start drafting"}
             </Button>
           </div>
         </div>

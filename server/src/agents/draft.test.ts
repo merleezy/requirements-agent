@@ -20,6 +20,14 @@ test("user message formats Q&A pairs", () => {
   assert.match(message, /A: Yes\./);
 });
 
+test("user message marks skipped answers explicitly", () => {
+  const message = buildDraftUserMessage({
+    ideaText: "A bookmarking app",
+    clarifications: [{ question: "Single-user?", answer: "" }],
+  });
+  assert.match(message, /A: \(no answer provided\)/);
+});
+
 const validRaw = {
   title: "T",
   summary: "S",

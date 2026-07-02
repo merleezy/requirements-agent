@@ -1,6 +1,11 @@
 import { HttpError } from "../errors.ts";
 import type { Session } from "../session/store.ts";
 import {
+  buildClarifyUserMessage,
+  clarifyPrompt,
+  parseClarifyOutput,
+} from "../agents/clarify.ts";
+import {
   buildDraftUserMessage,
   draftPrompt,
   parseDraftOutput,
@@ -30,9 +35,14 @@ interface AgentDefinition<I, O> {
   parseOutput: (raw: unknown) => O;
 }
 
-/* Stage registry. Clarify/critic/revise agents join here as their
- * build-order steps land (6, 7, 9). */
+/* Stage registry. Critic/revise agents join here as their build-order
+ * steps land (7, 9). */
 const agents = {
+  clarify: {
+    prompt: clarifyPrompt,
+    buildUserMessage: buildClarifyUserMessage,
+    parseOutput: parseClarifyOutput,
+  },
   draft: {
     prompt: draftPrompt,
     buildUserMessage: buildDraftUserMessage,

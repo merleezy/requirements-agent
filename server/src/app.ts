@@ -5,6 +5,7 @@ import express, {
 } from "express";
 import { HttpError } from "./errors.ts";
 import { SessionStore } from "./session/store.ts";
+import { clarifyRouter } from "./routes/clarify.ts";
 import { draftRouter } from "./routes/draft.ts";
 import { sessionRouter } from "./routes/session.ts";
 
@@ -17,6 +18,7 @@ export function createApp(store: SessionStore = new SessionStore()) {
   });
 
   app.use("/api/session", sessionRouter(store));
+  app.use("/api/clarify", clarifyRouter(store));
   app.use("/api/draft", draftRouter(store));
 
   /* Unknown /api paths get the same JSON error shape as everything else. */

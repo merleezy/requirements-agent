@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import type { Annotation, AgentRun, PRD, Project } from "../types.ts";
+import type {
+  Annotation,
+  AgentRun,
+  ClarifyState,
+  PRD,
+  Project,
+} from "../types.ts";
 import { createModelConfig, type ModelConfig } from "../llm/modelConfig.ts";
 
 /*
@@ -15,6 +21,7 @@ export interface Session {
   id: string;
   createdAt: string; /* ISO timestamp */
   lastActivityAt: number; /* epoch ms, for idle expiry */
+  clarify: ClarifyState | null;
   project: Project | null;
   prd: PRD | null;
   annotations: Annotation[];
@@ -26,6 +33,7 @@ export interface Session {
 export interface SessionState {
   sessionId: string;
   createdAt: string;
+  clarify: ClarifyState | null;
   project: Project | null;
   prd: PRD | null;
   annotations: Annotation[];
@@ -34,9 +42,9 @@ export interface SessionState {
 }
 
 export function toSessionState(session: Session): SessionState {
-  const { id, createdAt, project, prd, annotations, agentRuns, modelConfig } =
+  const { id, createdAt, clarify, project, prd, annotations, agentRuns, modelConfig } =
     session;
-  return { sessionId: id, createdAt, project, prd, annotations, agentRuns, modelConfig };
+  return { sessionId: id, createdAt, clarify, project, prd, annotations, agentRuns, modelConfig };
 }
 
 const IDLE_TTL_MS = 24 * 60 * 60 * 1000; /* expire after 24h without a request */
@@ -55,6 +63,7 @@ export class SessionStore {
       id: randomUUID(),
       createdAt: new Date().toISOString(),
       lastActivityAt: Date.now(),
+      clarify: null,
       project: null,
       prd: null,
       annotations: [],

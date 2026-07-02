@@ -1,5 +1,6 @@
 import type { PRD, Requirement } from "../types";
 import { api } from "./api";
+import type { ClarificationPair } from "./clarify";
 import { bootstrapSession } from "./session";
 
 /*
@@ -41,13 +42,17 @@ interface DraftResponse {
   prd: ServerPrd;
 }
 
-export async function startDraft(ideaText: string, apiKey: string): Promise<PRD> {
+export async function startDraft(
+  ideaText: string,
+  clarifications: ClarificationPair[],
+  apiKey: string,
+): Promise<PRD> {
   const { sessionId } = await bootstrapSession();
   const state = await api<DraftResponse>("/draft", {
     method: "POST",
     sessionId,
     apiKey,
-    body: { ideaText },
+    body: { ideaText, clarifications },
   });
   return toClientPrd(state);
 }

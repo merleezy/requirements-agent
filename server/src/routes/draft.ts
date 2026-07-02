@@ -1,19 +1,23 @@
 import { Router, type Request, type Response } from "express";
-import { HttpError } from "../errors.ts";
 import { callLLM } from "../llm/callLLM.ts";
 import { toSessionState, type SessionStore } from "../session/store.ts";
 import type { PRD, Project } from "../types.ts";
 import type { DraftOutput } from "../agents/draft.ts";
-import { requireApiKey, requireSession } from "./require.ts";
+import {
+  requireApiKey,
+  requireClarificationPairs,
+  requireIdeaText,
+  requireSession,
+} from "./require.ts";
 
 /*
  * POST /api/draft - build-order step 5: idea -> PRD through callLLM.
  * Creates the session's Project from the idea text, runs the draft agent,
- * and stores the normalized PRD on the session. Clarifying Q&A joins the
- * input at step 6; until then clarifications is always empty.
+ * and stores the normalized PRD on the session. Since step 6 the body also
+ * carries the clarify stage's Q&A pairs ({ question, answer } by question
+ * text, blank answer = skipped); it stays optional so drafting works even
+ * when clarify asked nothing.
  */
-
-const MAX_IDEA_LENGTH = 20_000;
 
 export function draftRouter(store: SessionStore): Router {
   const router = Router();
@@ -21,27 +25,18 @@ export function draftRouter(store: SessionStore): Router {
   router.post("/", async (req: Request, res: Response) => {
     const session = requireSession(store, req);
     const apiKey = requireApiKey(req);
+    const body = req.body as
+      | { ideaText?: unknown; clarifications?: unknown }
+      | null;
 
-    const ideaText: unknown = (req.body as { ideaText?: unknown } | null)?.ideaText;
-    if (typeof ideaText !== "string" || ideaText.trim().length === 0) {
-      throw new HttpError(
-        400,
-        "INVALID_INPUT",
-        "ideaText must be a non-empty string.",
-      );
-    }
-    if (ideaText.length > MAX_IDEA_LENGTH) {
-      throw new HttpError(
-        400,
-        "INVALID_INPUT",
-        `ideaText must be at most ${MAX_IDEA_LENGTH} characters.`,
-      );
-    }
-
-    const idea = ideaText.trim();
+    const idea = requireIdeaText(body);
+    const clarifications =
+      body?.clarifications === undefined
+        ? []
+        : requireClarificationPairs(body.clarifications);
     const output = await callLLM(
       "draft",
-      { ideaText: idea, clarifications: [] },
+      { ideaText: idea, clarifications },
       { session, apiKey },
     );
 
