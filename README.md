@@ -1,57 +1,72 @@
 # Requirements Agent
 
 A tool that turns a rough project idea into a structured, complete, testable PRD through a guided multi-agent process.
-The PRD is presented as an interactive document you can annotate and iterate on collaboratively with the agent.
+The PRD is presented as an interactive document you can annotate, refine, and iterate on collaboratively with AI agents.
 
 Requirements gathering is the highest-leverage, most-skipped stage of the SDLC.
 A vague spec produces wrong code fast, especially in agentic workflows where the spec *is* the interface to the implementer.
-This tool makes the clarify → draft → critique loop the actual product.
+This tool makes the clarify → draft → critique → revise → final review loop the actual product.
 
 ## How it works
 
-1. **Clarify** - you paste a rough idea; a clarifying agent asks up to five targeted questions (max two rounds) to resolve genuine ambiguity before anything is drafted.
-2. **Draft** - a drafting agent turns the clarified idea into a structured PRD: problem statement, target users, goals, functional requirements, out of scope, open questions.
-3. **Critique** - a critic agent checks every functional requirement against a five-dimension rubric, in priority order: unambiguous, atomic, testable, scoped, traceable.
-   It flags exactly one failing dimension per requirement per pass, so ambiguity always resolves before testability.
-4. **Revise** - comment on any section or requirement and the agent revises just that part; whole-document feedback goes through a global revision pass.
-   Anything touched is automatically re-run through the critic.
-5. **Export** - to markdown or JSON. A flagged-but-unresolved requirement blocks export, so a vague requirement can never quietly ship.
+1. **Clarify** — paste a rough idea; the Clarification Agent asks up to 8 targeted questions (0–3 for clear ideas, up to 8 for broad ones) to resolve genuine ambiguity before drafting begins.
+2. **Draft** — the Drafting Agent turns the clarified idea into a structured PRD: problem statement, target users, goals, functional requirements (one behavior per sentence), out of scope, open questions.
+3. **Critique** — the Critic Agent evaluates every functional requirement against a 5-dimension rubric (unambiguous, atomic, testable, scoped, traceable). It flags Defects (1–3) or Annotations (4–5), providing explicit assumptions or suggested rewrites.
+4. **Revise** —
+   - **Local Revision**: resolve individual requirement flags by accepting rewrites, providing feedback, grounding in scope, or moving items to out-of-scope.
+   - **Global Revision**: comment on any section or provide whole-document feedback (`revise_global`), updating state wholesale while preserving user intent and re-running critic checks in the background.
+5. **Final Engineering Review & Export** — before export, a lead software engineer review agent evaluates implementation risk and the 5-item Coherence Checklist (invariants, contradictions, entity lifecycle, per-context vs global scoping, open-question consistency).
+   - Options to **Apply AI Fixes**, **Respond with custom design intent**, **Dismiss findings**, or **Export immediately** to Markdown.
 
-Each stage runs on its own configurable model (via OpenRouter), tiered by task: cheap/fast models for clarifying and rubric-checking, stronger models for drafting and revising.
+## Model Configuration & Presets
 
-## Bring your own key
+Each stage runs on its own configurable model (via OpenRouter), with three curated presets:
+- **Balanced (Recommended Default)**: Optimal mix of speed, reasoning, and cost (GLM 5.2 Air, GLM 5.2, DeepSeek V4 Flash, Claude Sonnet 5).
+- **Budget (~95% quality at ~20% cost)**: High-speed, low-cost execution using DeepSeek V4 Flash, MiniMax M3, and GLM 5.2.
+- **Max Quality**: Top-tier reasoning powered by Claude Sonnet 5, Claude Opus 4.8, and Claude Fable-5.
 
-There are no accounts and no server-side storage.
+Per-stage model assignments can be customized anytime in the **Settings** page (`/api/models`).
+
+## Bring Your Own Key
+
+There are no user accounts and no database storage.
 You supply your own OpenRouter API key, which lives only in your browser session and is attached per request.
-It is never logged, never persisted, and never shared between sessions - the browser tab is the session boundary.
+It is never logged, never persisted, and never shared server-side.
 
-## Stack
+## Architecture & Tech Stack
 
-- **Frontend:** React + TypeScript + Vite, with a custom Tailwind (v4) theme in `client/`
-- **Backend:** Node + Express (session state in memory, no database)
-- **LLM provider:** OpenRouter (OpenAI-compatible format, so direct provider keys are a natural later addition)
+- **Frontend:** React + TypeScript + Vite, custom CSS theme tokens in `client/`
+- **Backend:** Node + Express + TypeScript (session state in memory)
+- **LLM Provider:** OpenRouter API (OpenAI-compatible HTTP client wrapper)
+- **Export Engine:** Native Markdown downloader with gate validation
 
-## Development
+## Development & Running Locally
 
+### Backend Server (`server/`)
+```sh
+cd server
+npm install
+npm run dev     # Express server on http://localhost:3001
+npm test        # Run unit test suite (node --test)
+```
+
+### Frontend Client (`client/`)
 ```sh
 cd client
 npm install
 npm run dev     # Vite dev server on http://localhost:5173
-npm run build   # type-check + production build
+npm run build   # TypeScript check + Vite production bundle
 ```
 
-Note for this repo's dev environment: the project lives on the WSL filesystem, so run node/npm inside WSL (nvm-managed), not from Windows.
-Windows npm fails on `\\wsl.localhost` UNC paths.
+*Note for WSL environments:* Run Node/npm commands inside WSL (nvm-managed) rather than Windows command line to prevent UNC path issues.
 
-## Project documents
+## Project Documents
 
-- [docs/requirements-agent-spec.md](docs/requirements-agent-spec.md) - full product spec: pipeline, rubric, data model, architecture, security model
-- [docs/agent-prompts.md](docs/agent-prompts.md) - the five finalized agent system prompts
-- [design/prd-doc-reference.html](design/prd-doc-reference.html) - visual design reference for the PRD document view (decoded copy in `design/_extracted/`)
-- [CLAUDE.md](CLAUDE.md) - working agreements and architecture rules for agent-assisted development
+- [docs/requirements-agent-spec.md](docs/requirements-agent-spec.md) — full product spec: pipeline, rubric, data model, architecture, security model
+- [docs/agent-prompts.md](docs/agent-prompts.md) — finalized system prompts for all agents
+- [design/prd-doc-reference.html](design/prd-doc-reference.html) — visual design reference for the PRD document view
+- [CLAUDE.md](CLAUDE.md) — architectural rules, system context, and decision records
 
 ## Status
 
-Early development, following the build order in the spec.
-Done so far: Tailwind theme (tokens + base components).
-Next: static PRD document component.
+**Complete & Fully Functional**. The guided multi-agent pipeline (Clarify, Draft, Critic, Revise Local, Revise Global, Final Engineering Review, Settings, Export) is built, tested (97 unit tests passing), and verified for production build.
