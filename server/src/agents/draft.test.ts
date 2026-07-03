@@ -49,6 +49,18 @@ test("parseDraftOutput accepts a valid shape and ignores extra fields", () => {
   assert.deepEqual(output.functionalRequirements, [{ text: "does a thing" }]);
 });
 
+test("parseDraftOutput strips id citations from requirement text", () => {
+  const output = parseDraftOutput({
+    ...validRaw,
+    functionalRequirements: [
+      { text: "The ledger updates on every recorded payment (per FR-12)." },
+    ],
+  });
+  assert.deepEqual(output.functionalRequirements, [
+    { text: "The ledger updates on every recorded payment." },
+  ]);
+});
+
 test("parseDraftOutput rejects missing or malformed fields", () => {
   assert.throws(() => parseDraftOutput(null));
   assert.throws(() => parseDraftOutput({ ...validRaw, title: undefined }));

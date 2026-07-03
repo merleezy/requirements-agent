@@ -1,4 +1,5 @@
 import type { CriticFlag } from "../types.ts";
+import { stripRequirementIdReferences } from "../util/text.ts";
 
 /*
  * Revise agent - local (spec pipeline stage 4): one flagged requirement +
@@ -32,6 +33,22 @@ If the flag proposed splitting the requirement and the user agreed, put each
 resulting requirement on its own line in revisedText (plain lines, no
 numbering or bullets).
 
+If resolving the flag requires adding several qualifying rules (validation,
+failure handling, edge cases), split instead of stacking clauses: put each
+independently testable behavior on its own line in revisedText, rather than
+growing one sentence with parentheticals and provisos.
+
+The PRD's open questions are provided as read-only context. Do not write
+requirement text that presupposes an answer to any of them - a document must
+not defer a decision and encode it at the same time. If the flag cannot be
+resolved without deciding one of those questions, return unresolved and name
+the decision that is needed.
+
+Requirement text must stand alone. Never reference another requirement by id
+or number ("per FR-2", "see REQ-003") - ids are system-owned and unstable
+across edits. If one behavior depends on another, restate the dependency in
+words.
+
 Ensure that you preserve the exact spelling, capitalization, and spacing of the original requirement text, except for the parts you are intentionally correcting to resolve the flag. Do not concatenate words or strip necessary spaces.
 
 Output ONLY this JSON shape, with no other text and no markdown code fences:
@@ -48,6 +65,11 @@ export interface ReviseLocalInput {
    * suggestedRewrite verbatim doesn't need this agent at all - the route
    * applies that text directly (see routes/reviseLocal.ts). */
   response: string;
+  /* The PRD's open questions, as read-only context: the prompt forbids
+   * rewrites that presuppose an answer to one (the REQ-011-assumes-Q4
+   * failure mode - a lone requirement rewrite can't know a decision was
+   * deliberately deferred without seeing the list). */
+  openQuestions: string[];
 }
 
 export interface ReviseLocalOutput {
@@ -58,7 +80,11 @@ export interface ReviseLocalOutput {
 /* The prompt's "[USER MESSAGE: original requirement text, the critic flag
  * object, and the user's response]". */
 export function buildReviseLocalUserMessage(input: ReviseLocalInput): string {
-  const { requirement, flag, response } = input;
+  const { requirement, flag, response, openQuestions } = input;
+  const questions =
+    openQuestions.length === 0
+      ? "(none)"
+      : openQuestions.map((q) => `- ${q}`).join("\n");
   return `Requirement (id: ${requirement.id}):
 ${requirement.text}
 
@@ -68,6 +94,9 @@ Critic's flag:
 - reason: ${flag.reason}
 - suggestedRewrite: ${flag.suggestedRewrite ?? "(none)"}
 - assumption: ${flag.assumption ?? "(none)"}
+
+The PRD's open questions (read-only context - do not presuppose answers):
+${questions}
 
 User's response to this flag:
 ${response}`;
@@ -82,9 +111,12 @@ export function parseReviseLocalOutput(raw: unknown): ReviseLocalOutput {
     throw new Error("revise-local output is not an object");
   }
   const o = raw as Record<string, unknown>;
+  /* Id citations are stripped like every other model-produced requirement
+   * text; newlines survive so atomic splits still split downstream. */
   const revisedText =
-    typeof o.revisedText === "string" && o.revisedText.trim().length > 0
-      ? o.revisedText
+    typeof o.revisedText === "string" &&
+    stripRequirementIdReferences(o.revisedText).length > 0
+      ? stripRequirementIdReferences(o.revisedText)
       : null;
   const unresolved =
     typeof o.unresolved === "string" && o.unresolved.trim().length > 0

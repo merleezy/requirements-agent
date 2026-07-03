@@ -1,4 +1,5 @@
 import type { FlagNature, RubricDimension } from "../types.ts";
+import { stripRequirementIdReferences } from "../util/text.ts";
 
 /*
  * Critic agent (spec pipeline stage 3): one requirement -> the single most
@@ -102,6 +103,8 @@ Dimensions 4–5 are ANNOTATIONS ONLY (cannot block acceptance).
 Suggested Rewrite Rules
 
 Only provide suggestedRewrite when it is genuinely safe.
+
+Rewritten text must stand alone: never reference another requirement by id or number ("per FR-2") - restate the dependency in words instead.
 
 Unambiguous
 - Do NOT silently choose an interpretation.
@@ -247,9 +250,13 @@ export function parseCriticOutput(raw: unknown): CriticOutput {
   }
   const nature = NATURE_BY_DIMENSION[dimension as RubricDimension];
 
+  /* The route applies an accepted suggestedRewrite verbatim, so id
+   * citations are stripped here like every other model-produced
+   * requirement text. */
   let suggestedRewrite =
-    typeof o.suggestedRewrite === "string" && o.suggestedRewrite.length > 0
-      ? o.suggestedRewrite
+    typeof o.suggestedRewrite === "string" &&
+    stripRequirementIdReferences(o.suggestedRewrite).length > 0
+      ? stripRequirementIdReferences(o.suggestedRewrite)
       : null;
   let assumption =
     typeof o.assumption === "string" && o.assumption.length > 0 ? o.assumption : null;

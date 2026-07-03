@@ -213,6 +213,18 @@ Decisions made at step 10, flagged per the rule above:
 - The critic's assumptions gained temporal defaults (same pass): a stated trigger or cadence ("daily", "when X happens") settles timing, and time-of-day/channel/timezone/retry details are tuning parameters, not defects.
   This stops the flag → rewrite → re-flag loop on reminder/notification/recurring-behavior requirements.
 
+A quality pass followed (2026-07-02, fifth prompt revision - see `docs/agent-prompts.md` Revisions for full reasoning), driven by reviewing a pipeline-passing PRD that showed cross-requirement gaps.
+Decisions from that pass:
+
+- Requirement text must stand alone: draft/critic/revise prompts forbid citing other requirements by id, and `stripRequirementIdReferences` (`server/src/util/text.ts`) strips citation-shaped references ("(per FR-12)", "as per REQ-3", "(see FR-2)") from all model-produced requirement text at parse time - in `parseDraftOutput`, the critic's `suggestedRewrite`, and both revise parsers.
+  The stripper is deliberately conservative (citation shapes only, bare ids in prose are left alone) and preserves newlines so atomic splits still split downstream.
+- Draft and both revise prompts got altitude guidance: one behavior per sentence; a change needing several qualifying rules splits into separate requirements instead of stacking clauses (the revise loops otherwise accrete provisos onto one sentence).
+- Requirements must not presuppose answers to open questions.
+  Revise-local's input gained `openQuestions` (read-only context, wired from the session PRD in the route) and must return `unresolved` when a fix requires deciding one; revise-global must delete a question via `otherSectionChanges.openQuestions` when feedback resolves it; draft must not mint a requirement and a question that contradict.
+- The final reviewer walks a bounded five-item Coherence Checklist (sum/balance invariants, one-concept-two-definitions, entity lifecycle, per-context vs global scoping, open-question consistency) - the cross-requirement defect classes the per-requirement critic structurally cannot see.
+  A requirement presupposing an open question's answer is defined as a contradiction (high severity when material).
+  The checklist explicitly does not lower the PASS bar, so it does not reopen the re-run convergence problem.
+
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.
 Steps 1-3 are unaffected by the renumbering.

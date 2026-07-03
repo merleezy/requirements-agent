@@ -136,7 +136,12 @@ export function reviseLocalRouter(store: SessionStore): Router {
     } else if (typeof body?.response === "string" && body.response.trim().length > 0) {
       const output = await callLLM(
         "revise_local",
-        { requirement: { id: requirement.id, text: requirement.text }, flag, response: body.response.trim() },
+        {
+          requirement: { id: requirement.id, text: requirement.text },
+          flag,
+          response: body.response.trim(),
+          openQuestions: prd.openQuestions,
+        },
         { session, apiKey },
       );
       if (output.unresolved !== null) {

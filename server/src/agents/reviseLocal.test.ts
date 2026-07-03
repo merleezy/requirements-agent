@@ -15,6 +15,7 @@ test("user message includes the requirement, the flag, and the response", () => 
     requirement: { id: "FR-4", text: "Users can organize bookmarks into categories and folders." },
     flag,
     response: "Categories and folders are different - categories are tags, folders are nested storage.",
+    openQuestions: [],
   });
   assert.match(message, /id: FR-4/);
   assert.match(message, /categories and folders\./);
@@ -29,9 +30,32 @@ test("user message renders a present suggestedRewrite and assumption", () => {
     requirement: { id: "FR-1", text: "t" },
     flag: { ...flag, suggestedRewrite: "rewrite text", assumption: "an assumption" },
     response: "r",
+    openQuestions: [],
   });
   assert.match(message, /suggestedRewrite: rewrite text/);
   assert.match(message, /assumption: an assumption/);
+});
+
+test("user message lists the PRD's open questions as read-only context", () => {
+  const message = buildReviseLocalUserMessage({
+    requirement: { id: "FR-1", text: "t" },
+    flag,
+    response: "r",
+    openQuestions: ["Should users be able to edit expenses?", "Which currencies are supported?"],
+  });
+  assert.match(message, /open questions \(read-only context/);
+  assert.match(message, /- Should users be able to edit expenses\?/);
+  assert.match(message, /- Which currencies are supported\?/);
+});
+
+test("user message marks an empty open-question list", () => {
+  const message = buildReviseLocalUserMessage({
+    requirement: { id: "FR-1", text: "t" },
+    flag,
+    response: "r",
+    openQuestions: [],
+  });
+  assert.match(message, /open questions[\s\S]*?\(none\)/);
 });
 
 test("parseReviseLocalOutput accepts a resolved revision", () => {
@@ -75,4 +99,13 @@ test("empty strings normalize to null, so an all-blank reply is rejected", () =>
 test("rejects a non-object", () => {
   assert.throws(() => parseReviseLocalOutput(null));
   assert.throws(() => parseReviseLocalOutput("nope"));
+});
+
+test("id citations are stripped from revisedText, preserving split newlines", () => {
+  const output = parseReviseLocalOutput({
+    requirementId: "FR-4",
+    revisedText: "Users can tag bookmarks (per FR-2).\nUsers can nest folders.",
+    unresolved: null,
+  });
+  assert.equal(output.revisedText, "Users can tag bookmarks.\nUsers can nest folders.");
 });

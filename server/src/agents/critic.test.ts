@@ -121,6 +121,14 @@ test("empty-string rewrite and assumption normalize to null", () => {
   assert.equal(output.assumption, null);
 });
 
+test("id citations are stripped from suggestedRewrite", () => {
+  const output = parseCriticOutput({
+    ...failedRaw,
+    suggestedRewrite: "Returns results within 500ms (see FR-2).",
+  });
+  assert.equal(output.suggestedRewrite, "Returns results within 500ms.");
+});
+
 test("rejects malformed outputs", () => {
   assert.throws(() => parseCriticOutput(null));
   assert.throws(() => parseCriticOutput({ ...failedRaw, passed: "no" }));

@@ -286,6 +286,7 @@ export default function App() {
   const [finalReviewEvaluating, setFinalReviewEvaluating] = useState(false);
   const [finalReviewResult, setFinalReviewResult] = useState<FinalReviewResult | null>(null);
   const [appliedIssueIds, setAppliedIssueIds] = useState<Set<string>>(new Set());
+  const [dismissedIssueIds, setDismissedIssueIds] = useState<Set<string>>(new Set());
   const [revisingIssueId, setRevisingIssueId] = useState<string | null>(null);
   const activeAbortControllerRef = useRef<AbortController | null>(null);
 
@@ -375,6 +376,7 @@ export default function App() {
     const previousFindings = buildPreviousFindings();
     setExportOptionsModalOpen(false);
     setAppliedIssueIds(new Set());
+    setDismissedIssueIds(new Set());
     setRevisingIssueId(null);
     setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
@@ -385,6 +387,7 @@ export default function App() {
   const handleReRunReview = () => {
     const previousFindings = buildPreviousFindings();
     setAppliedIssueIds(new Set());
+    setDismissedIssueIds(new Set());
     setRevisingIssueId(null);
     setFinalReviewResult(null);
     setFinalReviewEvaluating(true);
@@ -395,6 +398,63 @@ export default function App() {
     setExportOptionsModalOpen(false);
     if (state.prd) {
       downloadPrdAsMarkdown(state.prd);
+    }
+  };
+
+  const handleDismissIssue = (issueId: string) => {
+    setDismissedIssueIds((s) => new Set(s).add(issueId));
+  };
+
+  const handleRespondToIssue = async (issue: FinalReviewIssue, userThoughts: string) => {
+    if (!state.prd) return;
+
+    if (activeAbortControllerRef.current) {
+      activeAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
+
+    setRevisingIssueId(issue.id);
+    const instruction =
+      `Treat the current PRD as the canonical document. The user provided explicit design rationale regarding final review finding ${issue.id} ("${issue.explanation}"): "${userThoughts}". ` +
+      `Update the PRD document or open questions accordingly to incorporate this decision.`;
+
+    dispatch({ type: "sendChat", text: `Respond to ${issue.id}: "${userThoughts}"` });
+    dispatch({ type: "agentChat", text: `Updating PRD based on response to ${issue.id}…` });
+
+    setChatBusy(true);
+    try {
+      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+        instruction,
+        undefined,
+        apiKey,
+        controller.signal,
+      );
+      dispatch({ type: "applyGlobalRevision", prd });
+      dispatch({ type: "agentChat", text: summary });
+      setAppliedIssueIds((s) => new Set(s).add(issue.id));
+
+      if (recheckIds.length > 0) {
+        const textMap = new Map(
+          prd.functionalRequirements
+            .filter((r) => recheckIds.includes(r.id))
+            .map((r) => [r.id, r.text]),
+        );
+        void runBackgroundCritic(recheckIds, textMap);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        dispatch({ type: "agentChat", text: `Response to ${issue.id} cancelled.` });
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      dispatch({ type: "agentChat", text: `Couldn't apply response for ${issue.id} (${message}).` });
+    } finally {
+      if (activeAbortControllerRef.current === controller) {
+        activeAbortControllerRef.current = null;
+      }
+      setChatBusy(false);
+      setRevisingIssueId(null);
     }
   };
 
@@ -453,7 +513,9 @@ export default function App() {
 
   const handleApplyAllAiFixes = async () => {
     if (!finalReviewResult || !state.prd) return;
-    const unapplied = finalReviewResult.issues.filter((i) => !appliedIssueIds.has(i.id));
+    const unapplied = finalReviewResult.issues.filter(
+      (i) => !appliedIssueIds.has(i.id) && !dismissedIssueIds.has(i.id),
+    );
     if (unapplied.length === 0) return;
 
     if (activeAbortControllerRef.current) {
@@ -936,9 +998,12 @@ export default function App() {
               evaluating={finalReviewEvaluating}
               result={finalReviewResult}
               appliedIssueIds={appliedIssueIds}
+              dismissedIssueIds={dismissedIssueIds}
               revisingIssueId={revisingIssueId}
               onApplyAllAiFixes={handleApplyAllAiFixes}
               onApplySingleAiFix={handleApplySingleAiFix}
+              onDismissIssue={handleDismissIssue}
+              onRespondToIssue={handleRespondToIssue}
               onReRunReview={handleReRunReview}
               onStopActiveProcess={handleStopActiveProcess}
               onExportAnyway={handleExportAnyway}

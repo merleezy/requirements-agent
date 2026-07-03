@@ -164,3 +164,18 @@ test("parser rejects otherSectionChanges with a wrong type", () => {
     }),
   );
 });
+
+test("id citations are stripped from changed and new requirement text", () => {
+  const output = parseReviseGlobalOutput({
+    changedRequirements: [
+      { id: "FR-1", revisedText: "User can save a screenshot (per FR-2) from a URL." },
+    ],
+    newRequirements: [{ text: "User can search saved items, as per FR-2." }],
+    removedRequirementIds: [],
+    otherSectionChanges: null,
+  });
+  assert.deepEqual(output.changedRequirements, [
+    { id: "FR-1", revisedText: "User can save a screenshot from a URL." },
+  ]);
+  assert.deepEqual(output.newRequirements, [{ text: "User can search saved items." }]);
+});

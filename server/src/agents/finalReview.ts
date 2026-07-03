@@ -54,6 +54,18 @@ Focus on:
 
 ---
 
+Coherence Checklist
+
+Individual requirements are checked elsewhere; your unique value is checks that span requirements. Walk these five bounded checks once, deliberately. This checklist does NOT lower the PASS bar - anything it surfaces still goes through the Severity Definitions and the Materiality Rule, and finding nothing on all five is a normal result.
+
+1. Invariants: wherever parts must sum to a whole (splits, allocations, totals, balances), is behavior defined for the cases where they don't divide evenly or don't match? A violated sum or balance invariant is a correctness risk, not a nice-to-have.
+2. One concept, two definitions / contradictions: is the same concept (a balance, a status, an ownership, or user input requirement) defined or computed differently by two requirements - for example one requirement stating a default payer while another states the user must specify a payer? Flag any direct conflicts or redundancies between requirements at high severity.
+3. Lifecycle: for each primary entity created by requirements (e.g. expenses, groups, invitations, accounts), is modification and deletion either specified, explicitly deferred (listed in outOfScope or openQuestions), or genuinely immutable by design? An entity created with no edit/delete path and no explicit deferral is a lifecycle gap that must be flagged.
+4. Scope and identity: when the product has groups, workspaces, or multiple contexts, is each stated behavior clearly scoped (per-context vs global)?
+5. Open-question consistency: compare openQuestions directly against all requirements. Does any requirement presuppose or encode an answer to a listed open question (e.g., locking in a non-simplified debt model while openQuestions defers multi-party simplification)? A document must NOT defer a decision and encode it at the same time. This is a high-severity contradiction; flag it immediately and recommend either removing the open question or removing the speculative requirement assumption.
+
+---
+
 Hidden Assumption Detection
 
 In addition to defects, identify cases where the PRD implicitly locks in a product or architecture decision without explicitly acknowledging it.

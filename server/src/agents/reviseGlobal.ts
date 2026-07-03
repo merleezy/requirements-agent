@@ -1,3 +1,5 @@
+import { stripRequirementIdReferences } from "../util/text.ts";
+
 /*
  * Revise agent - global (spec pipeline stage 5): the whole current PRD +
  * the user's free-form feedback on the document as a whole -> a diff
@@ -27,6 +29,31 @@ full rewrite of the document. Do not touch anything the feedback didn't address.
 For any NEW requirements you add, follow the same rules the draft agent follows:
 one behavior each, don't invent unstated specifics, don't add anything not
 grounded in the idea/goals/feedback given.
+
+Requirement text (changed or new) must stand alone. Never reference another
+requirement by id or number ("per FR-2", "see REQ-003") - ids are system-owned
+and unstable across edits. If one behavior depends on another, restate the
+dependency in words.
+
+Keep changed and new requirements at a consistent altitude: one behavior per
+sentence. If a change needs several qualifying rules (validation, failure
+handling, edge cases), split - separate newRequirements entries, or one
+requirement per line in revisedText - rather than stacking clauses onto one
+sentence.
+
+Requirement text (changed or new) must state current, observable behavior only. Do NOT write design rationale, compliance notes, or speculative future statements in requirement text.
+
+Preserve exact word boundaries, proper spacing, and capitalization. Proofread requirement text to avoid concatenated words (e.g., "meansthe").
+
+Validation requirements in the same domain must share consistent failure semantics. If one validation rule specifies explicit failure handling, related validation rules must also specify their failure behavior.
+
+Respect the PRD's open questions: do not write requirement text that
+presupposes the answer to one - a document must not defer a decision and
+encode it at the same time. If the user's feedback resolves an open question,
+make the requirement change AND remove that question via
+otherSectionChanges.openQuestions (it is a full replacement, so return the
+remaining questions without the resolved one). If the feedback does not
+resolve it, leave both the question and the undecided behavior untouched.
 
 Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
@@ -166,7 +193,12 @@ function parseChangedRequirements(
     if (typeof entry !== "object" || entry === null) continue;
     const e = entry as Record<string, unknown>;
     const id = typeof e.id === "string" ? e.id.trim() : "";
-    const revisedText = typeof e.revisedText === "string" ? e.revisedText.trim() : "";
+    /* Id citations are stripped like every other model-produced requirement
+     * text; newlines survive so multi-line splits still split downstream. */
+    const revisedText =
+      typeof e.revisedText === "string"
+        ? stripRequirementIdReferences(e.revisedText)
+        : "";
     /* Skip entries the model emitted with blank id or text rather than
      * failing the entire pass - a hallucinated or partial entry should not
      * prevent an otherwise-valid diff from being applied. */
@@ -189,7 +221,7 @@ function parseNewRequirements(value: unknown): { text: string }[] {
     if (typeof e.text !== "string" || e.text.trim().length === 0) {
       throw new Error("revise-global output: newRequirement.text must be a non-empty string");
     }
-    return { text: e.text.trim() };
+    return { text: stripRequirementIdReferences(e.text) || e.text.trim() };
   });
 }
 

@@ -104,6 +104,18 @@ Rules for functionalRequirements — this is the section a separate critic will
 check line by line, so follow these strictly:
 - Each requirement is ONE behavior. If you notice yourself writing "and" to join
   two distinct actions, split it into two requirements instead.
+- Keep requirements at a consistent altitude: one sentence per requirement. If a
+  behavior needs several qualifying rules (validation, failure handling, edge
+  cases), write each independently testable rule as its own requirement rather
+  than stacking clauses onto one sentence.
+- Each requirement must stand alone. Never reference another requirement by id
+  or number ("per FR-2", "see requirement 3") - ids are assigned by the system
+  and change as requirements are split or removed. If one behavior depends on
+  another, restate the dependency in words.
+- A requirement must not presuppose the answer to anything you list in
+  openQuestions. If you catch yourself writing one that does, either make the
+  decision explicit in the requirement and drop the question, or keep the
+  question and write the requirement without the assumption.
 - State requirements in terms of observable behavior, not vague qualities. Prefer
   "returns results within 500ms" over "is fast." If you don't have a concrete
   number or condition, don't invent one — write the requirement as specifically
@@ -232,6 +244,8 @@ Suggested Rewrite Rules
 
 Only provide suggestedRewrite when it is genuinely safe.
 
+Rewritten text must stand alone: never reference another requirement by id or number ("per FR-2") - restate the dependency in words instead.
+
 Unambiguous
 - Do NOT silently choose an interpretation.
 - Only rewrite if based on an explicit assumption.
@@ -311,6 +325,22 @@ If the flag proposed splitting the requirement and the user agreed, put each
 resulting requirement on its own line in revisedText (plain lines, no numbering
 or bullets).
 
+If resolving the flag requires adding several qualifying rules (validation,
+failure handling, edge cases), split instead of stacking clauses: put each
+independently testable behavior on its own line in revisedText, rather than
+growing one sentence with parentheticals and provisos.
+
+The PRD's open questions are provided as read-only context. Do not write
+requirement text that presupposes an answer to any of them - a document must
+not defer a decision and encode it at the same time. If the flag cannot be
+resolved without deciding one of those questions, return unresolved and name
+the decision that is needed.
+
+Requirement text must stand alone. Never reference another requirement by id
+or number ("per FR-2", "see REQ-003") - ids are system-owned and unstable
+across edits. If one behavior depends on another, restate the dependency in
+words.
+
 Ensure that you preserve the exact spelling, capitalization, and spacing of the original requirement text, except for the parts you are intentionally correcting to resolve the flag. Do not concatenate words or strip necessary spaces.
 
 Output ONLY this JSON shape, with no other text and no markdown code fences:
@@ -320,8 +350,8 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
   "unresolved": string | null
 }
 
-[USER MESSAGE: original requirement text, the critic flag object, and the
-user's response]
+[USER MESSAGE: original requirement text, the critic flag object, the PRD's
+open questions, and the user's response]
 ```
 
 ---
@@ -342,6 +372,25 @@ full rewrite of the document. Do not touch anything the feedback didn't address.
 For any NEW requirements you add, follow the same rules the draft agent follows:
 one behavior each, don't invent unstated specifics, don't add anything not
 grounded in the idea/goals/feedback given.
+
+Requirement text (changed or new) must stand alone. Never reference another
+requirement by id or number ("per FR-2", "see REQ-003") - ids are system-owned
+and unstable across edits. If one behavior depends on another, restate the
+dependency in words.
+
+Keep changed and new requirements at a consistent altitude: one behavior per
+sentence. If a change needs several qualifying rules (validation, failure
+handling, edge cases), split - separate newRequirements entries, or one
+requirement per line in revisedText - rather than stacking clauses onto one
+sentence.
+
+Respect the PRD's open questions: do not write requirement text that
+presupposes the answer to one - a document must not defer a decision and
+encode it at the same time. If the user's feedback resolves an open question,
+make the requirement change AND remove that question via
+otherSectionChanges.openQuestions (it is a full replacement, so return the
+remaining questions without the resolved one). If the feedback does not
+resolve it, leave both the question and the undecided behavior untouched.
 
 Output ONLY this JSON shape, with no other text and no markdown code fences:
 {
@@ -426,6 +475,18 @@ Focus on:
 - Inconsistent terminology
 - Unrealistic or underspecified behavior assumptions that affect system logic
 - Missing constraints ONLY when their absence would cause incorrect implementation
+
+---
+
+Coherence Checklist
+
+Individual requirements are checked elsewhere; your unique value is checks that span requirements. Walk these five bounded checks once, deliberately. This checklist does NOT lower the PASS bar - anything it surfaces still goes through the Severity Definitions and the Materiality Rule, and finding nothing on all five is a normal result.
+
+1. Invariants: wherever parts must sum to a whole (splits, allocations, totals, balances), is behavior defined for the cases where they don't divide evenly or don't match? A violated sum or balance invariant is a correctness risk, not a nice-to-have.
+2. One concept, two definitions: is the same concept (a balance, a status, an ownership) defined or computed differently by two requirements - for example one requirement defining a net per-member value while another displays pairwise values? If two teams could reasonably pick different data models, that is at least a hidden assumption, at worst a contradiction.
+3. Lifecycle: for each entity the requirements create, is editing/removing it either specified, explicitly deferred (out of scope or an open question), or genuinely ignorable?
+4. Scope and identity: when the product has groups, workspaces, or multiple contexts, is each stated behavior clearly scoped (per-context vs global)?
+5. Open-question consistency: does any requirement presuppose the answer to a listed open question? A document must not defer a decision and encode it at the same time - that is a contradiction. Report it at high severity when the presupposed behavior is material, recommending either resolving the question or removing the assumption from the requirement.
 
 ---
 
@@ -534,3 +595,16 @@ plus, on re-runs, the previous round's findings each marked "fix applied" or
   Without that memory every re-run was an independent sample over the whole PRD, which almost always finds something new, so the loop never terminated.
   The Re-review Rules make round N+1 primarily verify round N's fixes, treat left-as-is findings as accepted risk that must not be re-raised (even reworded), and forbid new sub-high findings on unchanged content.
 - Final review: the output parser now derives the status from issue severities (any `high` means REQUIRES_CHANGES, otherwise PASS) instead of trusting the model's own status field, keeps medium/low issues as notes on a PASS instead of dropping them, and sorts by severity and truncates overshooting lists at 8 instead of failing the call.
+
+2026-07-02 - fifth pass, requested by Isaac after reviewing a PRD that passed the full pipeline (a roommate expense splitter) but showed cross-requirement quality gaps:
+
+- Draft, critic, revise (local + global): requirement text must stand alone - never cite another requirement by id ("per FR-12", "see REQ-003").
+  Ids are server-owned and shift meaning across splits/removals, and the UI renders a separate positional display sequence, so stored citations either dangle or point at the wrong requirement (the reviewed PRD's REQ-011 cited "FR-12", which resolved to nothing a reader could find).
+  Belt and suspenders: `stripRequirementIdReferences` (`server/src/util/text.ts`) also strips citation-shaped references from all model-produced requirement text at parse time (draft requirements, critic suggestedRewrite, both revise outputs), so the rule holds even when a model ignores it.
+- Draft, revise (local + global): altitude guidance - one behavior per sentence; when a change needs several qualifying rules, split into separate requirements instead of stacking clauses.
+  Motivated by the reviewed PRD's REQ-011, a 40-word clause-stacked paragraph sitting next to one-line requirements, which revise passes tend to produce because they resolve flags by appending provisos.
+- Draft, revise (local + global): requirements must not presuppose the answer to an open question (the reviewed PRD both asked "should expenses be editable?" and wrote a requirement assuming edits exist).
+  Revise-local now receives the PRD's open questions as read-only context (it previously could not know a decision was deliberately deferred) and must return unresolved when a fix requires deciding one; revise-global must remove a question via otherSectionChanges.openQuestions when the user's feedback genuinely resolves it.
+- Final review: added a five-item Coherence Checklist (sum/balance invariants, one-concept-two-definitions, entity lifecycle, per-context vs global scoping, open-question consistency) walked once per review.
+  These are the cross-requirement defect classes the per-requirement critic structurally cannot see and an open-ended "find risks" pass under-samples - the reviewed PRD shipped a net-ledger-vs-pairwise-debts model ambiguity and an unspecified equal-split rounding rule past review.
+  Deliberately bounded categories rather than a broader mandate, so it does not reopen the convergence problem the fourth pass fixed; the checklist explicitly does not lower the PASS bar, and requirement-presupposes-open-question is called out as a contradiction (high severity when material).
