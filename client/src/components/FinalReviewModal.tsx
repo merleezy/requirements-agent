@@ -231,9 +231,18 @@ export function FinalReviewModal({
               </button>
             </div>
           ) : (
-            <Button variant="neutral" onClick={onStopActiveProcess}>
-              Stop Request
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="neutral" onClick={onStopActiveProcess}>
+                Stop Request
+              </Button>
+              <button
+                onClick={onCancel}
+                title="Keep working in the document - the review continues in the background"
+                className="cursor-pointer text-xs font-bold text-ink-400 hover:text-ink-950 p-1"
+              >
+                ✕
+              </button>
+            </div>
           )}
         </div>
 
@@ -250,9 +259,18 @@ export function FinalReviewModal({
                   Checking for missing edge cases, undefined behavior, and ambiguous requirements.
                 </p>
               </div>
-              <Button variant="neutral" onClick={onStopActiveProcess}>
-                Cancel Review
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="neutral" onClick={onCancel}>
+                  Continue in Background
+                </Button>
+                <Button variant="neutral" onClick={onStopActiveProcess}>
+                  Cancel Review
+                </Button>
+              </div>
+              <p className="text-[11.5px] text-ink-400">
+                You can keep browsing and editing the document - the Export button reopens
+                this review when you are ready.
+              </p>
             </div>
           ) : isRevising ? (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
@@ -267,9 +285,14 @@ export function FinalReviewModal({
                     : `Modifying section to address ${revisingIssueId}.`}
                 </p>
               </div>
-              <Button variant="neutral" onClick={onStopActiveProcess}>
-                Cancel AI Revision
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="neutral" onClick={onCancel}>
+                  Continue in Background
+                </Button>
+                <Button variant="neutral" onClick={onStopActiveProcess}>
+                  Cancel AI Revision
+                </Button>
+              </div>
             </div>
           ) : activeIssues.length === 0 && (appliedIssues.length > 0 || dismissedIssues.length > 0) ? (
             <div className="space-y-4">
@@ -477,10 +500,12 @@ export function FinalReviewModal({
         </div>
 
         {/* Footer Actions */}
-        {!evaluating && !isRevising && result?.status === "REQUIRES_CHANGES" && activeIssues.length > 0 && (
+        {!evaluating && !isRevising && activeIssues.length > 0 && (
           <div className="flex flex-wrap items-center justify-between border-t border-line-200 pt-4 gap-2">
             <div className="text-[11.5px] text-ink-500">
-              Apply fixes individually, respond with notes, or dismiss findings.
+              {result?.status === "PASS"
+                ? "Apply notes individually or all at once - none of them block export."
+                : "Apply fixes individually, respond with notes, or dismiss findings."}
             </div>
 
             <div className="flex items-center gap-2">
@@ -488,7 +513,7 @@ export function FinalReviewModal({
                 Cancel
               </Button>
               <Button variant="neutral" onClick={onExportAnyway}>
-                Export Anyway
+                {result?.status === "PASS" ? "Export" : "Export Anyway"}
               </Button>
               <Button
                 variant="primary"

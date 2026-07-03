@@ -225,6 +225,23 @@ Decisions from that pass:
   A requirement presupposing an open question's answer is defined as a contradiction (high severity when material).
   The checklist explicitly does not lower the PASS bar, so it does not reopen the re-run convergence problem.
 
+A sixth prompt pass followed (2026-07-02, two parts - see `docs/agent-prompts.md` Revisions), driven by two more pipeline-passing PRDs.
+Part one (done in a separate agent session; `docs/agent-prompts.md` was re-synced to the shipped prompts afterward): draft/revise-global forbid speculative or rationale prose in requirement text ("if X is introduced in the future..."), require proofread word boundaries (the "meansthe" squish arrived via draft, which the third pass's revise-local-only guard could not catch), and require consistent failure semantics across same-domain validation rules; checklist items 2/3/5 were tightened (conflicts/redundancies, mandatory lifecycle flags, direct openQuestions comparison).
+Part two: checklist item 1 names the concrete equal-split rounding case ($10 among 3) and holds the app's own computed shares to the same sum invariant as user input; item 2 gained a derived-views check (an action defined against a simplified view with no underlying record is a contradiction); item 5 compares openQuestions against the ENTIRE document including outOfScope (a PRD excluded multi-currency in outOfScope while an open question still asked about it).
+
+Final-review findings gained two non-LLM resolution paths alongside "Apply Fix" (built in the same separate session as part one above): Dismiss (client-state only, `dismissedIssueIds` in `App`, rendered in a dismissed log; a dismissed finding travels to re-runs as disposition `not_addressed`, i.e. accepted risk the reviewer must not re-raise) and Respond (`handleRespondToIssue`: the user's own direction for a finding goes through the same `revise_global` call as Apply Fix, with the user's text taking precedence over the reviewer's recommendation).
+
+A seventh prompt pass followed (2026-07-02, see `docs/agent-prompts.md` Revisions), driven by a fourth PRD iteration plus an A/B observation: re-running the unchanged final-review prompt on a stronger model caught every defect class the weaker model had passed.
+Decisions from that pass:
+
+- Reviewer capability beats reviewer rules: two previously proposed checklist tweaks were deliberately dropped (a capable model generalized the rounding example to percentage splits on its own), and the Balanced preset's `final_review` stage moved to `anthropic/claude-opus-4.8` - the final gate runs once or twice per document, so it is the cheapest place in the pipeline to spend capability while draft stays on a cheap model.
+- Draft + revise-global gained a dedup rule (state each behavior exactly once; no capability requirement whose system effect is restated as a separate requirement) - targeting the duplication mechanism behind the fourth PRD's dominant defect - and draft's openQuestions are scoped to this-version decisions, not roadmap ideas.
+- Final-review UX: the Apply All footer now also shows on a PASS with non-blocking notes (previously per-note only), and the review/fix flow no longer blocks the document - the modal can be hidden while a review or fix runs (the request continues; `onCancel` never aborts, only "Stop Request" does), the TopBar Export button pulses "Review running…" and reopens the modal, and a completed review that found changes announces itself in chat.
+
+An eighth prompt pass (2026-07-02, see `docs/agent-prompts.md` Revisions) fixed a rule-composition blind spot: a PRD shipped expenses that could be recorded/edited/deleted but never viewed, and no review round could flag it because the draft's traces-back rule excludes the obvious while the reviewer's no-scope-expansion constraint suppresses the finding.
+Fix: draft gained "the read path is traceable" (write capabilities imply a view/list requirement), and checklist item 3 checks the read path with an explicit carve-out that an implied read path is not scope expansion.
+The distinction worth remembering: model capability fixes judgment failures; prompt changes fix blind spots the rules themselves create - diagnose which kind before reaching for either.
+
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.
 Steps 1-3 are unaffected by the renumbering.

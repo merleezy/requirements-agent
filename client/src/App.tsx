@@ -346,6 +346,12 @@ export default function App() {
             text: `Final review passed - the PRD is buildable as written. ${result.issues.length} non-blocking note${result.issues.length === 1 ? "" : "s"} listed in the review dialog.`,
           });
         }
+      } else {
+        const blocking = result.issues.filter((i) => i.severity === "high").length;
+        dispatch({
+          type: "agentChat",
+          text: `Final review found ${result.issues.length} finding${result.issues.length === 1 ? "" : "s"} (${blocking} blocking). Click Export to review them.`,
+        });
       }
     } catch (err) {
       setFinalReviewEvaluating(false);
@@ -362,8 +368,17 @@ export default function App() {
     }
   };
 
+  /* True while a final review or a finding fix is in flight. The modal can
+   * be hidden during either (browsing continues, the request keeps running);
+   * the Export button then reopens the review instead of the options modal. */
+  const finalReviewActive = finalReviewEvaluating || revisingIssueId !== null;
+
   const handleExportClick = () => {
     if (!state.prd) return;
+    if (finalReviewActive) {
+      setFinalReviewModalOpen(true);
+      return;
+    }
     setExportOptionsModalOpen(true);
   };
 
@@ -958,6 +973,7 @@ export default function App() {
             reviewing={reviewing}
             onOpenSettings={() => setSettingsOpen(true)}
             onExport={handleExportClick}
+            finalReviewActive={finalReviewActive}
           />
           <div className="flex min-h-0 flex-1">
             <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">

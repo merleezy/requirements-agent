@@ -30,7 +30,11 @@ export const defaultModelConfig: ModelConfig = {
   critic: { model: "deepseek/deepseek-v4-flash" },
   revise_local: { model: "z-ai/glm-5.2" },
   revise_global: { model: "anthropic/claude-sonnet-5" },
-  final_review: { model: "anthropic/claude-sonnet-5" },
+  /* The strongest model in the pipeline sits at the last gate: final review
+   * runs once or twice per document (a sliver of total cost) and observed
+   * runs showed sonnet-5 pattern-matching the coherence checklist where
+   * stronger models apply it as a principle (2026-07-02). */
+  final_review: { model: "anthropic/claude-opus-4.8" },
 };
 
 export function createModelConfig(): ModelConfig {
@@ -89,9 +93,9 @@ const MAX_MODEL_ID_LENGTH = 200;
 
 /*
  * Validates a settings-save body into a fresh ModelConfig. Strict on shape
- * (exactly the five stages, nothing else) so a typo'd stage name fails the
- * save instead of silently leaving that stage on its old model. Throws plain
- * Errors; the route wraps them in the API's uniform 400 shape.
+ * (exactly the stages in STAGES, nothing else) so a typo'd stage name fails
+ * the save instead of silently leaving that stage on its old model. Throws
+ * plain Errors; the route wraps them in the API's uniform 400 shape.
  */
 export function parseModelConfig(value: unknown): ModelConfig {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {

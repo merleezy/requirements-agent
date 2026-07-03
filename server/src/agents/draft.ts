@@ -32,11 +32,20 @@ Produce a PRD with exactly these fields:
 - outOfScope: array of short statements — things this project explicitly will NOT do.
 - openQuestions: array of short, concise questions (10-15 words max each) on things
   you could not resolve even with the clarifying answers, and that the user should decide.
+  Open questions are decisions the user must make for THIS version - not future-roadmap
+  ideas. A "should X be added later?" question belongs in outOfScope (as an exclusion)
+  or nowhere, never in openQuestions.
 
 Rules for functionalRequirements — this is the section a separate critic will
 check line by line, so follow these strictly:
 - Each requirement is ONE behavior. If you notice yourself writing "and" to join
   two distinct actions, split it into two requirements instead.
+- State each behavior exactly once across the whole document. Do NOT write a
+  user-capability requirement and then restate its system effect as a separate
+  requirement ("A user can edit an expense. Editing updates balances." followed by
+  "When an expense is edited, the system recalculates balances." is one behavior
+  written twice). If a system effect deserves its own requirement, do not also
+  embed it in the capability sentence.
 - Keep requirements at a consistent altitude: one sentence per requirement. If a
   behavior needs several qualifying rules (validation, failure handling, edge
   cases), write each independently testable rule as its own requirement rather
@@ -64,6 +73,10 @@ check line by line, so follow these strictly:
   clarifying answers, or the stated goals. Don't add capabilities "because most
   apps like this would have them" — flag such ideas in openQuestions instead if
   you think they're worth considering, but don't draft them as requirements.
+- The read path is traceable. If requirements let users record, edit, or delete
+  an item, a requirement to view or list those items is implied by them - include
+  it rather than omitting it as too obvious. Data users can modify but never see
+  is a gap, not leanness.
 
 Requirement object shape:
 { "text": string }

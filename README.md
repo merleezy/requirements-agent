@@ -5,68 +5,73 @@ The PRD is presented as an interactive document you can annotate, refine, and it
 
 Requirements gathering is the highest-leverage, most-skipped stage of the SDLC.
 A vague spec produces wrong code fast, especially in agentic workflows where the spec *is* the interface to the implementer.
-This tool makes the clarify → draft → critique → revise → final review loop the actual product.
+This tool makes the clarify -> draft -> critique -> revise -> final review loop the actual product.
 
 ## How it works
 
-1. **Clarify** — paste a rough idea; the Clarification Agent asks up to 8 targeted questions (0–3 for clear ideas, up to 8 for broad ones) to resolve genuine ambiguity before drafting begins.
-2. **Draft** — the Drafting Agent turns the clarified idea into a structured PRD: problem statement, target users, goals, functional requirements (one behavior per sentence), out of scope, open questions.
-3. **Critique** — the Critic Agent evaluates every functional requirement against a 5-dimension rubric (unambiguous, atomic, testable, scoped, traceable). It flags Defects (1–3) or Annotations (4–5), providing explicit assumptions or suggested rewrites.
-4. **Revise** —
-   - **Local Revision**: resolve individual requirement flags by accepting rewrites, providing feedback, grounding in scope, or moving items to out-of-scope.
-   - **Global Revision**: comment on any section or provide whole-document feedback (`revise_global`), updating state wholesale while preserving user intent and re-running critic checks in the background.
-5. **Final Engineering Review & Export** — before export, a lead software engineer review agent evaluates implementation risk and the 5-item Coherence Checklist (invariants, contradictions, entity lifecycle, per-context vs global scoping, open-question consistency).
-   - Options to **Apply AI Fixes**, **Respond with custom design intent**, **Dismiss findings**, or **Export immediately** to Markdown.
+1. **Clarify** - paste a rough idea; the Clarification Agent asks targeted questions to resolve genuine ambiguity before drafting begins (2-4 for a typical idea, a hard ceiling of 8, at most two rounds; every question is skippable).
+2. **Draft** - the Drafting Agent turns the clarified idea into a structured PRD: problem statement, target users, goals, functional requirements (one behavior per sentence), out of scope, open questions.
+3. **Critique** - the Critic Agent checks every functional requirement against a 5-dimension rubric (unambiguous, atomic, testable, scoped, traceable), flagging one issue per requirement per pass: a defect (dimensions 1-3, with a suggested rewrite where safe) or a judgment call (dimensions 4-5, for you to confirm).
+4. **Revise** -
+   - **Local**: resolve an individual flag by accepting the suggested rewrite, replying with your own feedback, confirming intent, or moving the requirement out of scope.
+   - **Global**: comment on any section or chat with Draftsmith about the whole document (`revise_global`); the change is applied as a diff and the critic re-checks whatever it touched in the background.
+5. **Final review and export** - a lead-engineer review agent gives a go/no-go verdict on implementation risk, walking a 5-item coherence checklist (sum/balance invariants, contradictions and derived views, entity lifecycle, per-context vs global scoping, open-question consistency).
+   Only high-severity findings block; medium/low findings ride along as non-blocking notes.
+   Each finding can be resolved three ways: **Apply Fix** (the reviewer's recommendation), **Respond** (your own direction for how to handle it), or **Dismiss** (accepted risk, never re-raised on re-runs).
+   Export downloads the PRD as Markdown.
 
-## Model Configuration & Presets
+## Model configuration and presets
 
-Each stage runs on its own configurable model (via OpenRouter), with three curated presets:
-- **Balanced (Recommended Default)**: Optimal mix of speed, reasoning, and cost (GLM 5.2 Air, GLM 5.2, DeepSeek V4 Flash, Claude Sonnet 5).
-- **Budget (~95% quality at ~20% cost)**: High-speed, low-cost execution using DeepSeek V4 Flash, MiniMax M3, and GLM 5.2.
-- **Max Quality**: Top-tier reasoning powered by Claude Sonnet 5, Claude Opus 4.8, and Claude Fable-5.
+Each pipeline stage runs on its own configurable model (via OpenRouter), with three curated presets:
 
-Per-stage model assignments can be customized anytime in the **Settings** page (`/api/models`).
+- **Balanced** (default): GLM 5.2 for clarify/draft/local revision, DeepSeek V4 Flash for the critic, Claude Sonnet 5 for global revision and final review.
+- **Budget** (~95% of quality at ~20% of the cost): DeepSeek V4 Flash, MiniMax M3, and GLM 5.2.
+- **Max quality**: Claude Sonnet 5, Claude Opus 4.8, and Claude Fable 5 on every stage.
 
-## Bring Your Own Key
+Per-stage model assignments can be customized anytime on the Settings page, which lists the live OpenRouter catalog with per-1M-token pricing.
+
+## Bring your own key
 
 There are no user accounts and no database storage.
 You supply your own OpenRouter API key, which lives only in your browser session and is attached per request.
 It is never logged, never persisted, and never shared server-side.
 
-## Architecture & Tech Stack
+## Architecture and tech stack
 
-- **Frontend:** React + TypeScript + Vite, custom CSS theme tokens in `client/`
-- **Backend:** Node + Express + TypeScript (session state in memory)
-- **LLM Provider:** OpenRouter API (OpenAI-compatible HTTP client wrapper)
-- **Export Engine:** Native Markdown downloader with gate validation
+- **Frontend:** React + TypeScript + Vite, Tailwind v4 with CSS-first theme tokens extracted from the design reference, in `client/`
+- **Backend:** Express 5 + TypeScript on Node 24 native type stripping (no build step), session state in memory, in `server/`
+- **LLM provider:** OpenRouter, called through a single `callLLM(stage, input)` transport; each agent's prompt, input/output types, and output validation live in one file under `server/src/agents/`
+- **Export:** client-side Markdown download, gated behind the final review
 
-## Development & Running Locally
+## Development and running locally
 
-### Backend Server (`server/`)
+### Backend server (`server/`)
 ```sh
 cd server
 npm install
 npm run dev     # Express server on http://localhost:3001
-npm test        # Run unit test suite (node --test)
+npm test        # unit test suite (node --test, 97 tests)
+npm run build   # type check (tsc --noEmit)
 ```
 
-### Frontend Client (`client/`)
+### Frontend client (`client/`)
 ```sh
 cd client
 npm install
-npm run dev     # Vite dev server on http://localhost:5173
+npm run dev     # Vite dev server on http://localhost:5173 (proxies /api to 3001)
 npm run build   # TypeScript check + Vite production bundle
 ```
 
-*Note for WSL environments:* Run Node/npm commands inside WSL (nvm-managed) rather than Windows command line to prevent UNC path issues.
+*Note for WSL environments:* run Node/npm commands inside WSL (nvm-managed) rather than from Windows, to avoid UNC path issues.
 
-## Project Documents
+## Project documents
 
-- [docs/requirements-agent-spec.md](docs/requirements-agent-spec.md) — full product spec: pipeline, rubric, data model, architecture, security model
-- [docs/agent-prompts.md](docs/agent-prompts.md) — finalized system prompts for all agents
-- [design/prd-doc-reference.html](design/prd-doc-reference.html) — visual design reference for the PRD document view
-- [CLAUDE.md](CLAUDE.md) — architectural rules, system context, and decision records
+- [docs/requirements-agent-spec.md](docs/requirements-agent-spec.md) - full product spec: pipeline, rubric, data model, architecture, security model
+- [docs/agent-prompts.md](docs/agent-prompts.md) - the agent system prompts, with a revision log explaining every change
+- [design/prd-doc-reference.html](design/prd-doc-reference.html) - visual design reference for the PRD document view
+- [CLAUDE.md](CLAUDE.md) - architectural rules, system context, and decision records
 
 ## Status
 
-**Complete & Fully Functional**. The guided multi-agent pipeline (Clarify, Draft, Critic, Revise Local, Revise Global, Final Engineering Review, Settings, Export) is built, tested (97 unit tests passing), and verified for production build.
+All ten build-order steps are implemented: the full pipeline (clarify, draft, critic, local and global revision, final review), the home/onboarding page, model settings, and gated Markdown export.
+The server has 97 unit tests (agents' message builders and output validators, `callLLM`, model config, routes); broader testing, CI/CD, and logging are deliberately deferred per the spec.

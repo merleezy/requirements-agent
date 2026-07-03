@@ -6,6 +6,9 @@ interface TopBarProps {
   flagCount: number;
   /* True while a critic pass is in flight (flags may still be arriving). */
   reviewing?: boolean;
+  /* True while a final review or finding fix runs with its modal hidden -
+   * the Export button pulses and reopens the review. */
+  finalReviewActive?: boolean;
   onOpenSettings: () => void;
   onExport: () => void;
 }
@@ -15,6 +18,7 @@ export function TopBar({
   version,
   flagCount,
   reviewing = false,
+  finalReviewActive = false,
   onOpenSettings,
   onExport,
 }: TopBarProps) {
@@ -46,7 +50,17 @@ export function TopBar({
           Settings
         </Button>
         <Button variant="primary" onClick={onExport}>
-          Export
+          {finalReviewActive ? (
+            <span
+              className="flex items-center gap-1.5"
+              title="Final review running - click to view"
+            >
+              <span className="h-1.5 w-1.5 flex-none animate-pulse rounded-full bg-white/85" />
+              Review running…
+            </span>
+          ) : (
+            "Export"
+          )}
         </Button>
       </div>
     </div>

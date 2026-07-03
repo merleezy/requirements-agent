@@ -99,11 +99,20 @@ Produce a PRD with exactly these fields:
 - outOfScope: array of short statements — things this project explicitly will NOT do.
 - openQuestions: array of short, concise questions (10-15 words max each) on things
   you could not resolve even with the clarifying answers, and that the user should decide.
+  Open questions are decisions the user must make for THIS version - not future-roadmap
+  ideas. A "should X be added later?" question belongs in outOfScope (as an exclusion)
+  or nowhere, never in openQuestions.
 
 Rules for functionalRequirements — this is the section a separate critic will
 check line by line, so follow these strictly:
 - Each requirement is ONE behavior. If you notice yourself writing "and" to join
   two distinct actions, split it into two requirements instead.
+- State each behavior exactly once across the whole document. Do NOT write a
+  user-capability requirement and then restate its system effect as a separate
+  requirement ("A user can edit an expense. Editing updates balances." followed by
+  "When an expense is edited, the system recalculates balances." is one behavior
+  written twice). If a system effect deserves its own requirement, do not also
+  embed it in the capability sentence.
 - Keep requirements at a consistent altitude: one sentence per requirement. If a
   behavior needs several qualifying rules (validation, failure handling, edge
   cases), write each independently testable rule as its own requirement rather
@@ -116,11 +125,14 @@ check line by line, so follow these strictly:
   openQuestions. If you catch yourself writing one that does, either make the
   decision explicit in the requirement and drop the question, or keep the
   question and write the requirement without the assumption.
+- State requirements in terms of current, observable behavior only. Do NOT write design rationale, compliance notes, or speculative future statements (e.g., "if X is introduced in the future, it would be layered on top") in requirement text.
+- Validation requirements in the same domain must share consistent failure semantics. If one validation rule specifies explicit failure handling (e.g., "rejects input and displays an error message"), related validation rules must also specify their failure behavior rather than using vague phrasing like "must ensure".
 - State requirements in terms of observable behavior, not vague qualities. Prefer
   "returns results within 500ms" over "is fast." If you don't have a concrete
   number or condition, don't invent one — write the requirement as specifically
   as the input actually supports, and let ambiguity surface naturally rather than
   papering over it with a fabricated detail.
+- Preserve exact word boundaries, proper spacing, and capitalization. Proofread requirement text to avoid concatenated words (e.g., "meansthe").
 - Do not silently resolve ambiguity left over from the clarifying stage. If the
   input still leaves something genuinely unclear, write the requirement as best
   you can but do not invent unstated specifics to make it sound complete.
@@ -128,6 +140,10 @@ check line by line, so follow these strictly:
   clarifying answers, or the stated goals. Don't add capabilities "because most
   apps like this would have them" — flag such ideas in openQuestions instead if
   you think they're worth considering, but don't draft them as requirements.
+- The read path is traceable. If requirements let users record, edit, or delete
+  an item, a requirement to view or list those items is implied by them - include
+  it rather than omitting it as too obvious. Data users can modify but never see
+  is a gap, not leanness.
 
 Requirement object shape:
 { "text": string }
@@ -384,6 +400,14 @@ handling, edge cases), split - separate newRequirements entries, or one
 requirement per line in revisedText - rather than stacking clauses onto one
 sentence.
 
+Requirement text (changed or new) must state current, observable behavior only. Do NOT write design rationale, compliance notes, or speculative future statements in requirement text.
+
+State each behavior exactly once across the whole document. Do NOT write a user-capability requirement and then restate its system effect as a separate requirement ("A user can edit an expense. Editing updates balances." alongside "When an expense is edited, the system recalculates balances." is one behavior written twice). When your change would duplicate behavior an existing requirement already states, revise the existing requirement instead of adding a new one.
+
+Preserve exact word boundaries, proper spacing, and capitalization. Proofread requirement text to avoid concatenated words (e.g., "meansthe").
+
+Validation requirements in the same domain must share consistent failure semantics. If one validation rule specifies explicit failure handling, related validation rules must also specify their failure behavior.
+
 Respect the PRD's open questions: do not write requirement text that
 presupposes the answer to one - a document must not defer a decision and
 encode it at the same time. If the user's feedback resolves an open question,
@@ -482,11 +506,11 @@ Coherence Checklist
 
 Individual requirements are checked elsewhere; your unique value is checks that span requirements. Walk these five bounded checks once, deliberately. This checklist does NOT lower the PASS bar - anything it surfaces still goes through the Severity Definitions and the Materiality Rule, and finding nothing on all five is a normal result.
 
-1. Invariants: wherever parts must sum to a whole (splits, allocations, totals, balances), is behavior defined for the cases where they don't divide evenly or don't match? A violated sum or balance invariant is a correctness risk, not a nice-to-have.
-2. One concept, two definitions: is the same concept (a balance, a status, an ownership) defined or computed differently by two requirements - for example one requirement defining a net per-member value while another displays pairwise values? If two teams could reasonably pick different data models, that is at least a hidden assumption, at worst a contradiction.
-3. Lifecycle: for each entity the requirements create, is editing/removing it either specified, explicitly deferred (out of scope or an open question), or genuinely ignorable?
+1. Invariants: wherever parts must sum to a whole (splits, allocations, totals, balances), is behavior defined for the cases where they don't divide evenly or don't match? Name the concrete case: an equal split of an amount that does not divide evenly (e.g. $10 among 3) - is the remainder's assignment specified, and do the app's OWN computed shares satisfy the same sum invariant the document enforces on user-entered input? A violated sum or balance invariant is a correctness risk, not a nice-to-have.
+2. One concept, two definitions / contradictions: is the same concept (a balance, a status, an ownership, or user input requirement) defined or computed differently by two requirements - for example one requirement stating a default payer while another states the user must specify a payer? Also check derived views: if one requirement displays a derived or simplified view of underlying data (e.g. a simplified payment summary over a pairwise ledger) and another requirement lets the user act on "the" data (settle, modify, delete), verify the action is defined against the underlying record and composes coherently with what the view displays - acting on a derived edge that has no underlying record is a contradiction. Flag any direct conflicts or redundancies between requirements at high severity.
+3. Lifecycle: for each primary entity created by requirements (e.g. expenses, groups, invitations, accounts), is modification and deletion either specified, explicitly deferred (listed in outOfScope or openQuestions), or genuinely immutable by design? An entity created with no edit/delete path and no explicit deferral is a lifecycle gap that must be flagged. Check the read path too: an entity that can be created, edited, or deleted but never viewed or listed is a gap - editing implies finding. A missing read path implied by existing write capabilities is NOT scope expansion and the Strict Constraints do not apply to it; flag it.
 4. Scope and identity: when the product has groups, workspaces, or multiple contexts, is each stated behavior clearly scoped (per-context vs global)?
-5. Open-question consistency: does any requirement presuppose the answer to a listed open question? A document must not defer a decision and encode it at the same time - that is a contradiction. Report it at high severity when the presupposed behavior is material, recommending either resolving the question or removing the assumption from the requirement.
+5. Open-question consistency: compare openQuestions against the ENTIRE document - the functional requirements AND the outOfScope list. Does any requirement presuppose or encode an answer to a listed open question (e.g., locking in a non-simplified debt model while openQuestions defers multi-party simplification)? Does outOfScope already decide something an open question defers (e.g. outOfScope excludes multi-currency support while an open question asks whether to support multiple currencies)? A document must NOT defer a decision and decide it at the same time, in any section. This is a high-severity contradiction; flag it immediately and recommend either removing the open question or removing the decided text it conflicts with.
 
 ---
 
@@ -608,3 +632,42 @@ plus, on re-runs, the previous round's findings each marked "fix applied" or
 - Final review: added a five-item Coherence Checklist (sum/balance invariants, one-concept-two-definitions, entity lifecycle, per-context vs global scoping, open-question consistency) walked once per review.
   These are the cross-requirement defect classes the per-requirement critic structurally cannot see and an open-ended "find risks" pass under-samples - the reviewed PRD shipped a net-ledger-vs-pairwise-debts model ambiguity and an unspecified equal-split rounding rule past review.
   Deliberately bounded categories rather than a broader mandate, so it does not reopen the convergence problem the fourth pass fixed; the checklist explicitly does not lower the PASS bar, and requirement-presupposes-open-question is called out as a contradiction (high severity when material).
+
+2026-07-02 - sixth pass, in two parts, after reviewing two more pipeline-passing PRDs (both roommate expense splitters).
+
+Part one (implemented via a separate agent session, synced into this document after the fact) reacted to a PRD that showed the model performing checklist compliance instead of achieving it:
+
+- Draft + revise (global): requirement text states current, observable behavior only - no design rationale, compliance notes, or speculative future statements.
+  The reviewed PRD contained "if debt simplification is introduced in the future, it would be an additional transformation layered on top" inside a requirement: prose written to appease the reviewer, not testable behavior.
+- Draft + revise (global): preserve exact word boundaries and proofread for concatenated words.
+  The squished-text guard from the third pass was revise-local-only, and "meansthe" arrived via draft.
+- Draft + revise (global): validation requirements in the same domain must share consistent failure semantics (one rule saying "rejects and displays an error" while a sibling says "must ensure" is an altitude defect).
+- Final review checklist items 2, 3, and 5 were tightened: item 2 now covers direct conflicts and redundancies (the default-payer-vs-must-specify contradiction), item 3 makes an entity with no edit/delete path and no explicit deferral a mandatory flag, and item 5 demands a direct openQuestions-vs-requirements comparison at high severity.
+
+Part two (this session) reacted to the next PRD, which fixed most of the above but still shipped three findings the checklist should catch:
+
+- Checklist item 1 now names the concrete rounding case - an equal split that does not divide evenly ($10 among 3) - and requires the app's own computed shares to satisfy the same sum invariant the document enforces on user input.
+  The rounding gap had survived three consecutive PRDs; the abstract phrasing ("parts must sum to a whole") was evidently not landing.
+- Checklist item 2 gained a derived-views check: when one requirement displays a simplified/derived view (a minimum-payments summary over a pairwise ledger) and another lets the user act on "the" data (settle a debt), the action must be defined against the underlying record and compose with the view.
+  The reviewed PRD let users settle pairwise balances while the summary displayed simplified payment edges with no underlying pairwise record - two teams would ship different products.
+- Checklist item 5 now compares openQuestions against the ENTIRE document, explicitly including outOfScope.
+  The reviewed PRD excluded multi-currency support in outOfScope while an open question asked whether to support multiple currencies - a defer-and-decide conflict the previous wording ("compare against all requirements") was structurally unable to see.
+
+2026-07-02 - seventh pass, after a fourth PRD iteration and an A/B observation on the final reviewer:
+
+- Context for the pass: re-running the unchanged final-review prompt with a stronger model caught every defect class the weaker model had passed (including a payer-excluded-from-split remainder edge no prior review had surfaced), with well-calibrated severities and no convergence regression.
+  Conclusion drawn: the checklist works as scaffolding for a capable model and cannot substitute for capability in a weaker one - so the reviewer fix is the model, not more rules, and two previously proposed checklist tweaks (generalize the rounding example beyond equal splits; close the "in the future" question dodge) were deliberately dropped as unnecessary for a capable reviewer.
+  The Balanced preset's final_review stage moved to a stronger model accordingly (see `server/src/llm/modelConfig.ts`): the final gate runs once or twice per document, so it is the cheapest place in the pipeline to spend capability.
+- Draft + revise (global): state each behavior exactly once - no user-capability requirement whose system effect is restated as a separate requirement.
+  The fourth PRD's dominant defect was belt-and-suspenders duplication ("A user can edit an expense. Editing updates balances." followed by "When an expense is edited, the system recalculates balances."), apparently written to demonstrate lifecycle compliance; this rule targets the mechanism rather than the instance.
+- Draft: openQuestions are decisions the user must make for this version, not future-roadmap ideas ("should X be added later?" belongs in outOfScope or nowhere).
+  The fourth PRD asked "should balance simplification be added in the future on top of the current ledger?" - roadmap noise that had migrated from requirement text (where the sixth pass banned speculation) into the questions list.
+
+2026-07-02 - eighth pass, after a fifth PRD (opus draft, fable final review) shipped expenses that could be recorded, edited, and deleted but never viewed - and three review rounds never flagged it:
+
+- Root cause was rule composition, not model capability: the draft's "only include what traces back" rule reads as excluding the obvious to a disciplined model, and the reviewer's "do NOT expand scope" constraint plus the "missing spec completeness" do-not-report entry actively suppress the flag (a missing read path causes no incorrect behavior, so a rule-obeying reviewer correctly stays silent).
+  Two well-followed rules composed into a blind spot; a smarter model cannot fix what the rules forbid.
+- Draft: added "the read path is traceable" - if users can record, edit, or delete an item, viewing/listing it is implied by those requirements and must be included.
+  Placed directly after the traces-back rule it counterbalances.
+- Final review checklist item 3: the lifecycle check now includes the read path (created/edited/deleted but never viewed is a gap; editing implies finding), with an explicit carve-out that flagging an implied read path is NOT scope expansion and the Strict Constraints do not apply to it.
+  Without the carve-out the constraint would keep suppressing the finding regardless of model quality.

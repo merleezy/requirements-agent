@@ -43,6 +43,8 @@ sentence.
 
 Requirement text (changed or new) must state current, observable behavior only. Do NOT write design rationale, compliance notes, or speculative future statements in requirement text.
 
+State each behavior exactly once across the whole document. Do NOT write a user-capability requirement and then restate its system effect as a separate requirement ("A user can edit an expense. Editing updates balances." alongside "When an expense is edited, the system recalculates balances." is one behavior written twice). When your change would duplicate behavior an existing requirement already states, revise the existing requirement instead of adding a new one.
+
 Preserve exact word boundaries, proper spacing, and capitalization. Proofread requirement text to avoid concatenated words (e.g., "meansthe").
 
 Validation requirements in the same domain must share consistent failure semantics. If one validation rule specifies explicit failure handling, related validation rules must also specify their failure behavior.
