@@ -431,23 +431,30 @@ export default function App() {
 
     setRevisingIssueId(issue.id);
     const instruction =
-      `Treat the current PRD as the canonical document. The user provided explicit design rationale regarding final review finding ${issue.id} ("${issue.explanation}"): "${userThoughts}". ` +
-      `Update the PRD document or open questions accordingly to incorporate this decision.`;
+      `Treat the current PRD as the canonical document. The user provided explicit design rationale regarding a review finding.\n` +
+      `Finding location (requirement IDs to update): ${issue.location}\n` +
+      `Finding: ${issue.explanation}\n` +
+      `User's response: "${userThoughts}"\n` +
+      `Update the requirements listed in the location (and/or open questions) to incorporate this decision.`;
 
     dispatch({ type: "sendChat", text: `Respond to ${issue.id}: "${userThoughts}"` });
     dispatch({ type: "agentChat", text: `Updating PRD based on response to ${issue.id}…` });
 
     setChatBusy(true);
     try {
-      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+      const { prd, summary, applied, recheckIds } = await sendGlobalFeedback(
         instruction,
         undefined,
         apiKey,
         controller.signal,
       );
       dispatch({ type: "applyGlobalRevision", prd });
-      dispatch({ type: "agentChat", text: summary });
-      setAppliedIssueIds((s) => new Set(s).add(issue.id));
+      if (applied) {
+        dispatch({ type: "agentChat", text: summary });
+        setAppliedIssueIds((s) => new Set(s).add(issue.id));
+      } else {
+        dispatch({ type: "agentChat", text: `${summary}\n⚠ The model did not modify any requirements for ${issue.id}. You may want to try again or apply the fix manually.` });
+      }
 
       if (recheckIds.length > 0) {
         const textMap = new Map(
@@ -484,23 +491,35 @@ export default function App() {
 
     setRevisingIssueId(issue.id);
     const instruction =
-      `Treat the current PRD as the canonical document. Preserve all existing content unless this review finding explicitly requires modifying it:\n` +
-      `- [${issue.id} - ${issue.severity}] ${issue.explanation} Recommendation: ${issue.recommendation}`;
+      `Treat the current PRD as the canonical document. The user explicitly requested to apply the following final review recommendation.\n` +
+      `Location (requirement IDs to modify): ${issue.location}\n` +
+      `Severity: ${issue.severity}\n` +
+      `Finding: ${issue.explanation}\n` +
+      `Required Action / Recommendation: ${issue.recommendation}\n` +
+      `INSTRUCTION: Update the requirement(s) at ${issue.location} or add a requirement to implement this recommendation explicitly in the PRD text.`;
 
     dispatch({ type: "sendChat", text: `Apply AI fix for ${issue.id}` });
     dispatch({ type: "agentChat", text: `Revising PRD for ${issue.id}…` });
 
     setChatBusy(true);
     try {
-      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+      const { prd, summary, applied, recheckIds } = await sendGlobalFeedback(
         instruction,
         undefined,
         apiKey,
         controller.signal,
       );
       dispatch({ type: "applyGlobalRevision", prd });
-      dispatch({ type: "agentChat", text: summary });
-      setAppliedIssueIds((s) => new Set(s).add(issue.id));
+
+      if (applied) {
+        dispatch({ type: "agentChat", text: summary });
+        setAppliedIssueIds((s) => new Set(s).add(issue.id));
+      } else {
+        dispatch({
+          type: "agentChat",
+          text: `${summary}\n⚠ The model did not change anything for ${issue.id}. It may already be satisfied, or the fix needs another try or a manual edit - ${issue.id} is left open.`,
+        });
+      }
 
       if (recheckIds.length > 0) {
         const textMap = new Map(
@@ -541,31 +560,38 @@ export default function App() {
 
     setRevisingIssueId("ALL");
     const issuesFormatted = unapplied
-      .map((i) => `- [${i.id} - ${i.severity}] ${i.explanation} Recommendation: ${i.recommendation}`)
+      .map(
+        (i) =>
+          `- Location: ${i.location} | Severity: ${i.severity}\n  Finding: ${i.explanation}\n  Recommendation: ${i.recommendation}`,
+      )
       .join("\n");
 
     const instruction =
       `Treat the current PRD as the canonical document. Preserve all existing content unless a review finding explicitly requires modifying it. ` +
-      `Apply ONLY modifications directly related to the final review findings:\n${issuesFormatted}`;
+      `Apply ONLY modifications directly related to the final review findings. Each finding lists the requirement IDs to modify in its Location field:\n${issuesFormatted}`;
 
     dispatch({ type: "sendChat", text: "Apply AI fixes for all remaining Final Review findings" });
     dispatch({ type: "agentChat", text: "Revising PRD for all remaining findings…" });
 
     setChatBusy(true);
     try {
-      const { prd, summary, recheckIds } = await sendGlobalFeedback(
+      const { prd, summary, applied, recheckIds } = await sendGlobalFeedback(
         instruction,
         undefined,
         apiKey,
         controller.signal,
       );
       dispatch({ type: "applyGlobalRevision", prd });
-      dispatch({ type: "agentChat", text: summary });
-      setAppliedIssueIds((s) => {
-        const next = new Set(s);
-        unapplied.forEach((i) => next.add(i.id));
-        return next;
-      });
+      if (applied) {
+        dispatch({ type: "agentChat", text: summary });
+        setAppliedIssueIds((s) => {
+          const next = new Set(s);
+          unapplied.forEach((i) => next.add(i.id));
+          return next;
+        });
+      } else {
+        dispatch({ type: "agentChat", text: `${summary}\n⚠ The model did not modify any requirements. You may want to try applying findings individually.` });
+      }
 
       if (recheckIds.length > 0) {
         const textMap = new Map(

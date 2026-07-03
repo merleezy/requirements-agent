@@ -242,6 +242,12 @@ An eighth prompt pass (2026-07-02, see `docs/agent-prompts.md` Revisions) fixed 
 Fix: draft gained "the read path is traceable" (write capabilities imply a view/list requirement), and checklist item 3 checks the read path with an explicit carve-out that an implied read path is not scope expansion.
 The distinction worth remembering: model capability fixes judgment failures; prompt changes fix blind spots the rules themselves create - diagnose which kind before reaching for either.
 
+A ninth prompt pass (2026-07-03, see `docs/agent-prompts.md` Revisions) restructured the final-review prompt only - the mental mode, not the rules - after concluding the reviewer was subtly framed to "find defects" rather than "assess implementation readiness".
+The prompt now runs three ordered internal passes (inventory the product, verify against principles, then judge), the old five-item Coherence Checklist became five Coherence Principles (each a defect class stated as a principle with one anchoring example, since a capable model generalizes from the example while the enumerated-check framing invited walking five items and stopping), and every finding is now classified as `spec_defect` vs `product_question` and rated `certain` vs `inferred`.
+Only certain spec_defects can block; `parseFinalReviewOutput` enforces this structurally (demoting high-severity product-questions/inferred findings to medium, defaulting missing fields to the blocking-capable values so an old-shape model keeps its ability to fail).
+The two-status contract, parser-derived status, re-review convergence rules, 5-issue cap, and temporal-defaults exclusion were deliberately left intact.
+A defect log now lives at `docs/defect-log.md` (one entry per pipeline-escaping defect, classified capability / rule blind spot / rule gap), with offending PRD JSONs to be saved under `docs/defect-prds/` as a replay-able regression set for future prompt changes.
+
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.
 Steps 1-3 are unaffected by the renumbering.

@@ -4,6 +4,9 @@ import { Button } from "./Button";
 export interface FinalReviewIssue {
   id: string;
   severity: "high" | "medium" | "low";
+  /* Optional because results parsed by older server versions lack them. */
+  type?: "spec_defect" | "product_question";
+  confidence?: "certain" | "inferred";
   category: string;
   location: string;
   explanation: string;
@@ -64,6 +67,16 @@ function IssueCard({
           <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-600">
             {issue.category}
           </span>
+          {issue.type === "product_question" && (
+            <span className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider bg-paper-tint text-ink-600 border border-line-400">
+              product question
+            </span>
+          )}
+          {issue.confidence === "inferred" && (
+            <span className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider bg-paper-tint text-ink-500 border border-line-300">
+              inferred
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span

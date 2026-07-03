@@ -161,6 +161,71 @@ test("a high-severity issue forces REQUIRES_CHANGES even if the model said PASS"
   assert.equal(parsed.issues.length, 1);
 });
 
+test("missing type/confidence default to the blocking-capable values", () => {
+  const parsed = parseFinalReviewOutput({
+    status: "REQUIRES_CHANGES",
+    summary: "Old-shape model output.",
+    issues: [issue("high", "FR-1 and FR-2 contradict each other.")],
+  });
+
+  assert.equal(parsed.status, "REQUIRES_CHANGES");
+  assert.equal(parsed.issues[0].type, "spec_defect");
+  assert.equal(parsed.issues[0].confidence, "certain");
+});
+
+test("a high-severity product_question is demoted to medium and cannot block", () => {
+  const parsed = parseFinalReviewOutput({
+    status: "REQUIRES_CHANGES",
+    summary: "Implicit design decision.",
+    issues: [
+      {
+        ...issue("high", "The PRD locks in creation-time balance calculation."),
+        type: "product_question",
+        confidence: "certain",
+      },
+    ],
+  });
+
+  assert.equal(parsed.status, "PASS");
+  assert.equal(parsed.issues[0].severity, "medium");
+  assert.equal(parsed.issues[0].type, "product_question");
+});
+
+test("a high-severity inferred finding is demoted to medium and cannot block", () => {
+  const parsed = parseFinalReviewOutput({
+    status: "REQUIRES_CHANGES",
+    summary: "Speculative reading.",
+    issues: [
+      {
+        ...issue("high", "A reader might interpret balances as real-time."),
+        type: "spec_defect",
+        confidence: "inferred",
+      },
+    ],
+  });
+
+  assert.equal(parsed.status, "PASS");
+  assert.equal(parsed.issues[0].severity, "medium");
+  assert.equal(parsed.issues[0].confidence, "inferred");
+});
+
+test("a certain spec_defect at high severity still blocks", () => {
+  const parsed = parseFinalReviewOutput({
+    status: "PASS",
+    summary: "Model under-called it.",
+    issues: [
+      {
+        ...issue("high", "FR-1 requires OCR-only entry while FR-2 requires manual entry."),
+        type: "spec_defect",
+        confidence: "certain",
+      },
+    ],
+  });
+
+  assert.equal(parsed.status, "REQUIRES_CHANGES");
+  assert.equal(parsed.issues[0].severity, "high");
+});
+
 test("issues are ordered by severity and truncated to 8", () => {
   const parsed = parseFinalReviewOutput({
     status: "REQUIRES_CHANGES",

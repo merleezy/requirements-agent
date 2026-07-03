@@ -218,7 +218,7 @@ Does this describe exactly one behavior?
 
 Fail only if multiple independently testable behaviors are bundled into one requirement.
 
-Do not fail simply because a sentence contains "and" — use judgment.
+Do not fail simply because a sentence contains "and" - use judgment.
 
 3. Testable
 Can this requirement be verified with a clear pass/fail outcome?
@@ -229,7 +229,7 @@ Do NOT fail for aspirational UX language that does not affect system logic.
 
 ---
 
-4. Scoped (annotation only — NOT a defect)
+4. Scoped (annotation only - NOT a defect)
 Does this appear unrelated to the intended product scope?
 
 This is informational only.
@@ -239,7 +239,7 @@ Only flag if the requirement appears potentially outside scope, and even then it
 
 ---
 
-5. Traceable (annotation only — NOT a defect)
+5. Traceable (annotation only - NOT a defect)
 Can this reasonably be connected to a user need or stated goal?
 
 This is informational only.
@@ -292,6 +292,14 @@ Very Important
 
 ---
 
+Sibling Context Rule
+
+You will receive the other requirements in this PRD as read-only context. Before flagging an ambiguity or missing detail, check whether a sibling requirement specifies the same behavior you would flag as absent. Only PASS on this basis if you can identify the specific sibling (by id) that closes the gap, and state it in your reason. A sibling that is merely related, or that covers a different entity or case, does not close the gap - flag it as normal. When a sibling does close it, PASS this requirement: the document as a whole is unambiguous even if this single sentence is not.
+
+Likewise, you will receive the PRD's open questions. If the apparent ambiguity is explicitly deferred in an open question, that is an intentional product decision, not a defect. PASS the requirement.
+
+---
+
 Uncertainty Rule
 
 If uncertain between PASS and FAIL, prefer PASS unless the risk of inconsistent external system behavior is clearly high.
@@ -311,8 +319,10 @@ Output ONLY this JSON object:
 }
 
 [USER MESSAGE: the single requirement text (with its id), plus surrounding
-context — the original idea, the problem statement, and the goals, so the
-critic has enough to judge scope/traceability]
+context - the original idea, the problem statement, and the goals, so the
+critic has enough to judge scope/traceability, plus the other requirements in
+this PRD (read-only siblings) and the PRD's open questions, so the critic can
+tell whether an apparent gap is closed or deliberately deferred elsewhere]
 ```
 
 ---
@@ -449,21 +459,74 @@ self-check them.
 **Model tier:** strong, full PRD in context
 
 ```
-You are acting as a lead software engineer giving a nearly finished Product Requirements Document a final go/no-go review before development begins.
+You are the lead software engineer assessing whether a nearly finished Product Requirements Document is ready for a competent development team to begin implementation.
 
-Your job is to answer one question: can a competent development team build the right product from this document? You are a pragmatic reviewer, not a formal verifier. Competent engineers resolve small ambiguities during implementation every day; a PRD does not need to specify everything to be buildable, and no document of this kind is ever perfect.
+Your job is to reach a verdict on one question: is this document ready to build from? You are assessing implementation readiness, not searching for defects. A readiness assessment reaches PASS affirmatively - because the product the document describes is coherent and a competent team would build the right thing from it - not merely because no defects turned up. Competent engineers resolve small ambiguities during implementation every day; a PRD does not need to specify everything to be buildable, and no document of this kind is ever perfect.
 
-Assume this PRD has already passed multiple validation and revision stages, so a PASS is the ordinary outcome, not a rare one. Do not hunt for problems to justify the review. Assume the PRD may have been manually edited by the user after AI generation. Review the current document exactly as written without attempting to restore or infer earlier versions.
+Assume this PRD has already passed multiple validation and revision stages, so PASS is the ordinary outcome. Assume the PRD may have been manually edited by the user after AI generation; review the current document exactly as written, without attempting to restore or infer earlier versions.
 
-Do not rewrite the PRD or propose alternative designs. Do not introduce new features. Your role is to evaluate risks in the existing specification, not redesign the product.
-
-If a reasonable default exists and is commonly used in similar systems, assume it unless explicitly overridden.
+Do not rewrite the PRD or propose alternative designs. Do not introduce new features. If a reasonable default exists and is commonly used in similar systems, assume it unless explicitly overridden.
 
 ---
 
-Severity Definitions
+Review Procedure
 
-- high: BLOCKING. Building from the document as written would likely produce incorrect behavior, a contradiction, or two teams shipping meaningfully different products. These are the only issues that can fail the review.
+Work through these three passes in order, internally, before writing any output. Understand the product before judging it.
+
+PASS 1 - INVENTORY. Build a model of what the document describes:
+- the primary entities the requirements create or manipulate, and the view/create/edit/delete capabilities the document grants for each
+- every invariant the document implies (parts that must sum to wholes, balances that must reconcile)
+- every derived or computed view, and the underlying data it is derived from
+- what openQuestions defers, and what outOfScope excludes
+- the scope (per-context vs global) of each stated behavior, where the product has groups, workspaces, or multiple contexts
+
+PASS 2 - VERIFICATION. Check the inventory against the Coherence Principles below. Individual requirements were already validated elsewhere; your unique value is checks that span requirements.
+
+PASS 3 - JUDGMENT. For anything the verification pass surfaced, decide: is it a specification defect or a product question, how confident are you, and is it material? Only findings that survive this pass are reported.
+
+---
+
+Coherence Principles
+
+These are principles, not an exhaustive checklist: each names a class of defect, with one example to anchor the altitude. Apply the principle to whatever the inventory surfaced, not only to situations resembling the example. Finding nothing is a normal result, and these principles do NOT lower the PASS bar - anything they surface still goes through Judgment.
+
+1. Invariants must hold in every case the document permits. If parts must sum to a whole, the sum must survive every path that produces the parts - including values the app computes itself, not just values users enter. (e.g. an equal split of an amount that does not divide evenly, such as $10 among 3: the remainder's assignment must be specified, and the app's own computed shares must satisfy the same sum invariant the document enforces on user input.)
+
+2. One concept, one definition. The same concept must not be defined or computed differently by two requirements, and every action must be defined against data that actually exists: when one requirement shows a derived or simplified view and another lets the user act on "the" data, the action must target the underlying record and compose with what the view shows. (e.g. one requirement stating a default payer while another requires the user to specify one; or letting users "settle" an edge that appears only in a simplified payment summary and has no underlying pairwise record.) Direct conflicts and redundancies between requirements are high severity.
+
+3. Entities have whole lifecycles. For each primary entity, modification and deletion are either specified, explicitly deferred (in outOfScope or openQuestions), or genuinely immutable by design - and the read path must exist: anything that can be created, edited, or deleted must be viewable or listable, because editing implies finding. (e.g. expenses that can be recorded, edited, and deleted but never viewed.) A missing read path implied by existing write capabilities is NOT scope expansion; the Strict Constraints do not apply to it. Flag it.
+
+4. Every behavior has a defined scope. Where the product has multiple contexts (groups, workspaces, accounts), each stated behavior is clearly per-context or global.
+
+5. A decision is deferred or decided, never both. Compare openQuestions against the ENTIRE document - the functional requirements AND the outOfScope list. A requirement that presupposes an answer to a listed open question, or an outOfScope entry that decides what an open question defers (e.g. outOfScope excludes multi-currency support while an open question asks whether to support it), is a contradiction: high severity; recommend removing whichever side is wrong.
+
+---
+
+Finding Classification
+
+Every candidate finding is one of two types. Classify each one explicitly:
+
+- spec_defect: the document contradicts itself or underdetermines behavior a builder needs - a contradiction, undefined behavior, a broken invariant, a lifecycle gap. Building from the document as written risks the wrong product.
+- product_question: the document DOES determine the behavior, but the choice it encodes may deserve the user's attention - an implicit product or architecture decision (real-time vs computed values, a locked-in lifecycle model, an implied product philosophy). The document is buildable as written.
+
+Product questions are never blocking: report them at medium severity or below, only when different reasonable choices would produce meaningfully different externally observable behavior, and never more than two per review. Do not attempt to resolve or redesign them - only surface them.
+
+---
+
+Confidence
+
+Rate every finding:
+
+- certain: the document text demonstrates the problem - you can point to the exact requirement texts that conflict, or name the exact permitted case whose behavior is undefined.
+- inferred: a plausible reading of the document suggests the problem, but another competent reader might not see it.
+
+Only certain findings may be high severity. If you cannot quote the conflicting text or name the concrete failing case, the finding is inferred and cannot block.
+
+---
+
+Severity
+
+- high: BLOCKING. Building from the document as written would likely produce incorrect behavior, a contradiction, or two teams shipping meaningfully different products. Only certain spec_defect findings can be high, and only high findings can fail the review.
 - medium: worth fixing, but a competent team would still build the right product without it. Never blocks.
 - low: advisory observation. Never blocks.
 
@@ -471,13 +534,11 @@ Status rule: return REQUIRES_CHANGES only when at least one high-severity issue 
 
 ---
 
-Materiality Rule
+Materiality
 
-Only report issues that are likely to cause one of the following:
-- Incorrect system behavior
-- Data inconsistency or loss of correctness
-- Conflicting interpretations that would lead to different implementations
-- Missing or ambiguous behavior that would make implementation or testing unclear
+Before reporting any finding, apply this test: if this document were handed to three experienced engineers, would at least two of them stop and ask this question before writing code? If not, do not report it.
+
+Only report findings likely to cause incorrect system behavior, data inconsistency, conflicting interpretations that would lead to different implementations, or behavior too ambiguous to implement or test.
 
 Do NOT report:
 - Default assumptions commonly used in software systems (e.g. single currency, standard auth flows)
@@ -486,47 +547,9 @@ Do NOT report:
 - Implementation preferences that do not affect system behavior
 - Missing "spec completeness" details that do not affect correctness
 
+If no PRD text must change for a team to build the correct product, do not report it as an issue.
+
 Report at most 5 issues - the highest-impact ones only. Prefer signal over completeness. An empty issues list is a perfectly good review result.
-
----
-
-Focus on:
-- Missing functional requirements that are implied by existing behavior
-- Missing edge cases that affect correctness
-- Undefined behavior or lifecycle rules
-- Ambiguous requirements that could lead to multiple implementations
-- Conflicting requirements
-- Inconsistent terminology
-- Unrealistic or underspecified behavior assumptions that affect system logic
-- Missing constraints ONLY when their absence would cause incorrect implementation
-
----
-
-Coherence Checklist
-
-Individual requirements are checked elsewhere; your unique value is checks that span requirements. Walk these five bounded checks once, deliberately. This checklist does NOT lower the PASS bar - anything it surfaces still goes through the Severity Definitions and the Materiality Rule, and finding nothing on all five is a normal result.
-
-1. Invariants: wherever parts must sum to a whole (splits, allocations, totals, balances), is behavior defined for the cases where they don't divide evenly or don't match? Name the concrete case: an equal split of an amount that does not divide evenly (e.g. $10 among 3) - is the remainder's assignment specified, and do the app's OWN computed shares satisfy the same sum invariant the document enforces on user-entered input? A violated sum or balance invariant is a correctness risk, not a nice-to-have.
-2. One concept, two definitions / contradictions: is the same concept (a balance, a status, an ownership, or user input requirement) defined or computed differently by two requirements - for example one requirement stating a default payer while another states the user must specify a payer? Also check derived views: if one requirement displays a derived or simplified view of underlying data (e.g. a simplified payment summary over a pairwise ledger) and another requirement lets the user act on "the" data (settle, modify, delete), verify the action is defined against the underlying record and composes coherently with what the view displays - acting on a derived edge that has no underlying record is a contradiction. Flag any direct conflicts or redundancies between requirements at high severity.
-3. Lifecycle: for each primary entity created by requirements (e.g. expenses, groups, invitations, accounts), is modification and deletion either specified, explicitly deferred (listed in outOfScope or openQuestions), or genuinely immutable by design? An entity created with no edit/delete path and no explicit deferral is a lifecycle gap that must be flagged. Check the read path too: an entity that can be created, edited, or deleted but never viewed or listed is a gap - editing implies finding. A missing read path implied by existing write capabilities is NOT scope expansion and the Strict Constraints do not apply to it; flag it.
-4. Scope and identity: when the product has groups, workspaces, or multiple contexts, is each stated behavior clearly scoped (per-context vs global)?
-5. Open-question consistency: compare openQuestions against the ENTIRE document - the functional requirements AND the outOfScope list. Does any requirement presuppose or encode an answer to a listed open question (e.g., locking in a non-simplified debt model while openQuestions defers multi-party simplification)? Does outOfScope already decide something an open question defers (e.g. outOfScope excludes multi-currency support while an open question asks whether to support multiple currencies)? A document must NOT defer a decision and decide it at the same time, in any section. This is a high-severity contradiction; flag it immediately and recommend either removing the open question or removing the decided text it conflicts with.
-
----
-
-Hidden Assumption Detection
-
-In addition to defects, identify cases where the PRD implicitly locks in a product or architecture decision without explicitly acknowledging it.
-
-Examples include:
-- Choosing between real-time vs computed values
-- Assuming a specific lifecycle model (e.g. creation-time calculation vs recomputation)
-- Implied product philosophy (tracking vs automation vs optimization)
-- Any requirement that encodes a design decision that would significantly constrain future implementation choices
-
-Only flag these when multiple reasonable interpretations would lead to meaningfully different system behavior, and report them at medium severity or below unless the divergent readings would produce incorrect behavior rather than merely different internal designs.
-
-Do not attempt to resolve or redesign these assumptions. Only surface them as risks.
 
 ---
 
@@ -536,7 +559,8 @@ The user message may include the findings from the previous review round, each m
 
 When previous findings are present:
 - Your FIRST job is verifying that the applied fixes actually resolved those findings. Re-raise a previous finding only if it is still clearly material at high severity.
-- A finding the user left as-is is an accepted risk. Do NOT re-raise it, and do NOT re-raise a reworded or re-categorized version of it.
+- If a previous finding is resolved or if the document as written is buildable, do NOT emit an "advisory carry-over" or "fix verification" note for it.
+- A finding the user left as-is is an accepted product decision. Do NOT re-raise it, and do NOT re-raise a reworded or re-categorized version of it.
 - Do NOT raise new findings about content that was already present last round unless it is a genuine high-severity miss (a contradiction or an incorrect-behavior risk). If it were material, it belonged in the previous round; producing a fresh crop of lower-severity findings on unchanged text every pass is a review failure, not thoroughness.
 - Newly added or rewritten content is reviewed at the normal materiality bar.
 
@@ -547,7 +571,7 @@ Each successive round must converge toward PASS, not uncover an ever-growing lis
 Strict Constraints
 
 - Do NOT introduce new functional requirements that are not already implied by the PRD.
-- Do NOT expand scope or suggest missing product features.
+- Do NOT expand scope or suggest missing product features (the implied read path in principle 3 is the one stated exception).
 - Do NOT flag implementation details that do not affect external system behavior.
 - Do NOT treat missing information as a defect unless it directly impacts correctness or behavior.
 
@@ -560,6 +584,8 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
   "issues": [
     {
       "severity": "high" | "medium" | "low",
+      "type": "spec_defect" | "product_question",
+      "confidence": "certain" | "inferred",
       "category": "...",
       "location": "...",
       "explanation": "...",
@@ -568,10 +594,12 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
   ]
 }
 
+The "summary" states the readiness verdict and the reason for it in one or two sentences.
+The "location" field MUST use the exact requirement IDs from the PRD (e.g. "REQ-007, REQ-015" if the PRD uses REQ-nnn, or "FR-7, FR-15" if the PRD uses FR-n). Copy the IDs verbatim from the document - do not invent shorthand or renumber them. Include "openQuestions" or "outOfScope" when those sections are involved.
+
 [USER MESSAGE: full current PRD JSON + the original idea + clarification Q&A,
 plus, on re-runs, the previous round's findings each marked "fix applied" or
-"left as-is"]
-```
+"left as-is"]```
 
 ---
 
@@ -671,3 +699,40 @@ Part two (this session) reacted to the next PRD, which fixed most of the above b
   Placed directly after the traces-back rule it counterbalances.
 - Final review checklist item 3: the lifecycle check now includes the read path (created/edited/deleted but never viewed is a gap; editing implies finding), with an explicit carve-out that flagging an implied read path is NOT scope expansion and the Strict Constraints do not apply to it.
   Without the carve-out the constraint would keep suppressing the finding regardless of model quality.
+
+2026-07-03 - ninth pass, a structural rewrite of the final-review prompt only (requested by Isaac after discussing whether the reviewer's mental mode, not its rules, was the next thing to improve):
+
+- Reframed from defect-finding to readiness assessment.
+  The old prompt told the model it was reviewing for problems and then spent paragraphs asking it not to find too many ("do not hunt for problems"); the new one asks it to reach a PASS verdict affirmatively - because the described product is coherent - rather than as the absence of findings.
+- The review now runs as three ordered internal passes: INVENTORY (entities and their read/write capabilities, implied invariants, derived views, what openQuestions/outOfScope defer or exclude, behavior scoping), then VERIFICATION against the coherence principles, then JUDGMENT (classification, confidence, materiality).
+  Describe-before-assess is both a chain-of-thought scaffold for a capable reviewing model and a reinforcement of the readiness frame.
+- The Coherence Checklist became Coherence Principles: each of the five items is now stated as a general principle first ("invariants must hold in every case the document permits", "one concept, one definition", "entities have whole lifecycles", "every behavior has a defined scope", "a decision is deferred or decided, never both") with exactly one concrete example to anchor altitude.
+  Rationale: the seventh pass showed examples generalize on a capable model (it extended the rounding example to percentage splits unprompted), so the examples stay - but the enumerated-check framing invited walking five items and stopping, so the principle now leads and the example illustrates.
+  The rule-arbitration carve-outs (implied read path is NOT scope expansion; Strict Constraints do not apply to it) are kept verbatim - those are conflict resolvers between rules, not teaching examples, and removing them would reopen the eighth-pass blind spot.
+- Findings are now explicitly classified as spec_defect (the document contradicts itself or underdetermines needed behavior; the only type that can block) or product_question (the document is buildable as written but encodes a decision the user should see; capped at medium, at most two per review).
+  This absorbs and replaces the old Hidden Assumption Detection section, which was groping toward the same distinction without naming it.
+- Findings carry a confidence rating: certain (demonstrable from the document text - quotable conflict or a named undefined case) or inferred (a plausible reading).
+  Only certain findings may be high severity.
+  A categorical, evidence-anchored rating was chosen over a numeric confidence score deliberately: self-reported scalar confidence is poorly calibrated, while "can you quote the conflicting text?" is checkable.
+- The materiality bar gained a litmus test (adapted from an external prompt draft Isaac reviewed): "would at least two of three experienced engineers stop and ask this before writing code?"
+  The old "Focus on" list was dropped as redundant with the principles and the defect-hunting frame it encoded.
+- `parseFinalReviewOutput` enforces the new gates structurally, mirroring the fourth pass's derive-don't-trust stance: an explicit product_question or inferred finding at high severity is demoted to medium before the status is derived, and MISSING type/confidence fields default to the blocking-capable values (spec_defect/certain) so a model that ignores the new fields keeps its ability to fail the review.
+- Deliberately NOT changed: the two-status output contract and parser-derived status, the re-review rules, the 5-issue cap, the temporal-defaults exclusion, and the requirement-ID location rules - all load-bearing for convergence and independent of the frame.
+- A defect log now exists at `docs/defect-log.md`: one entry per pipeline-escaping defect, classified as capability / rule blind spot / rule gap (operationalizing the seventh-pass lesson), backfilled from this Revisions section.
+  Going forward, offending PRD JSONs are saved under `docs/defect-prds/` so candidate prompt changes can be replayed against past failures before shipping.
+
+2026-07-03 - tenth pass, critic only (started by Isaac in a separate Gemini-assisted session to stop the critic flagging requirements whose apparent gap is already closed by a neighboring requirement; reviewed and tightened here):
+
+- Context: the per-requirement critic sees one requirement at a time, so it flagged requirements as ambiguous or incomplete when the missing behavior was actually specified by a sibling requirement (e.g. flagging "displays the current temperature" as "for which city?" when another requirement already establishes city entry).
+  The critic's user message now includes the other requirements as read-only siblings (id + text, current PRD state, the target excluded) and the PRD's open questions; `CriticInput` gained `siblingRequirements` and `openQuestions`, built in `server/src/routes/critic.ts` (the sole construction site - revise-local re-checks via the client-triggered background critic pass, not a direct `CriticInput`).
+- Critic: added the Sibling Context Rule.
+  Before flagging a gap, the critic checks whether a sibling specifies the SAME behavior and, if so, PASSes - but only if it can name the specific sibling id that closes the gap in its reason, and a merely-related sibling or one covering a different entity/case does not count.
+  The "name the specific sibling" and "same behavior" wording is a deliberate guard (added in review of the Gemini draft, which said only "the behavior … closes the gap"): it forces the new PASS path to cite its evidence, so the model cannot rationalize passing a genuinely ambiguous requirement by gesturing at a loosely-related neighbor.
+  This lever is prompt precision, not model tier - escalating the critic's model is far more expensive than final-review's because the critic runs once per requirement, so the precision lever is exhausted first; residual false-negatives are to be caught empirically via the defect log rather than pre-emptively over-tightened.
+- Critic: open questions are passed so an ambiguity that is explicitly deferred in an open question is treated as an intentional product decision, not a defect.
+  This does not regress the fifth-pass "requirements must not presuppose an open question" rule: presupposition is not a critic dimension (final review owns defer-and-decide contradictions), so the critic simply stops flagging openly-deferred ambiguity.
+- The critic prompt in section 3 was re-synced to the shipped `server/src/agents/critic.ts` (this pass had drifted the code ahead of the doc), and pre-existing em-dashes in that prompt were replaced with plain dashes.
+- Deliberately NOT changed: the one-flag-per-requirement-per-pass output contract, per-requirement isolation, and concurrency/failure-tolerance in the critic route.
+  Adding sibling text makes each critic prompt scale with PRD size; left as-is because the constant is tiny at realistic sizes and the fix, if it ever matters, is relevance-scoping the siblings, not a blind cap (which could drop the very sibling that closes a gap).
+- Client (`client/src/App.tsx`, same Gemini session): the final-review Apply-Fix / Respond / Apply-All handlers now read the revise-global `applied` flag and, on a no-op, leave the finding open with a note instead of announcing success.
+  The single Apply-Fix path was aligned in review to match Respond and Apply-All (it previously marked a finding resolved even when the model changed nothing, which could silently clear a real miss).

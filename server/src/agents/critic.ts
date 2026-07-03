@@ -62,7 +62,7 @@ Does this describe exactly one behavior?
 
 Fail only if multiple independently testable behaviors are bundled into one requirement.
 
-Do not fail simply because a sentence contains "and" — use judgment.
+Do not fail simply because a sentence contains "and" - use judgment.
 
 3. Testable
 Can this requirement be verified with a clear pass/fail outcome?
@@ -73,7 +73,7 @@ Do NOT fail for aspirational UX language that does not affect system logic.
 
 ---
 
-4. Scoped (annotation only — NOT a defect)
+4. Scoped (annotation only - NOT a defect)
 Does this appear unrelated to the intended product scope?
 
 This is informational only.
@@ -83,7 +83,7 @@ Only flag if the requirement appears potentially outside scope, and even then it
 
 ---
 
-5. Traceable (annotation only — NOT a defect)
+5. Traceable (annotation only - NOT a defect)
 Can this reasonably be connected to a user need or stated goal?
 
 This is informational only.
@@ -136,6 +136,14 @@ Very Important
 
 ---
 
+Sibling Context Rule
+
+You will receive the other requirements in this PRD as read-only context. Before flagging an ambiguity or missing detail, check whether a sibling requirement specifies the same behavior you would flag as absent. Only PASS on this basis if you can identify the specific sibling (by id) that closes the gap, and state it in your reason. A sibling that is merely related, or that covers a different entity or case, does not close the gap - flag it as normal. When a sibling does close it, PASS this requirement: the document as a whole is unambiguous even if this single sentence is not.
+
+Likewise, you will receive the PRD's open questions. If the apparent ambiguity is explicitly deferred in an open question, that is an intentional product decision, not a defect. PASS the requirement.
+
+---
+
 Uncertainty Rule
 
 If uncertain between PASS and FAIL, prefer PASS unless the risk of inconsistent external system behavior is clearly high.
@@ -162,6 +170,11 @@ export interface CriticInput {
   ideaText: string;
   problemStatement: string;
   goals: string[];
+  /* Lightweight sibling context so the critic can see whether an apparent
+   * ambiguity is already resolved by a neighboring requirement or
+   * explicitly deferred in an open question (prompt revision 2026-07-03). */
+  siblingRequirements: { id: string; text: string }[];
+  openQuestions: string[];
 }
 
 /* What the model returns, validated and normalized. The requirementId the
@@ -177,13 +190,25 @@ export interface CriticOutput {
 }
 
 /* The prompt's "[USER MESSAGE: the single requirement text, plus
- * surrounding context — the original idea, the problem statement, and the
- * goals]". The id is included so the model can echo it. */
+ * surrounding context - the original idea, the problem statement, the
+ * goals, sibling requirements, and open questions]". The id is included
+ * so the model can echo it. */
 export function buildCriticUserMessage(input: CriticInput): string {
   const goals =
     input.goals.length === 0
       ? "(none stated)"
       : input.goals.map((g) => `- ${g}`).join("\n");
+
+  const siblings =
+    input.siblingRequirements.length === 0
+      ? "(none)"
+      : input.siblingRequirements.map((r) => `[${r.id}]: ${r.text}`).join("\n");
+
+  const openQs =
+    input.openQuestions.length === 0
+      ? "(none)"
+      : input.openQuestions.map((q, i) => `Q${i + 1}. ${q}`).join("\n");
+
   return `Requirement to check (id: ${input.requirement.id}):
 ${input.requirement.text}
 
@@ -194,7 +219,13 @@ Context - the PRD's problem statement:
 ${input.problemStatement}
 
 Context - the PRD's goals:
-${goals}`;
+${goals}
+
+Context - other requirements in this PRD (read-only, do NOT critique these):
+${siblings}
+
+Context - open questions (explicitly deferred decisions, not defects):
+${openQs}`;
 }
 
 /* The rubric's fixed dimension -> nature mapping (spec: dimensions 1-3 are

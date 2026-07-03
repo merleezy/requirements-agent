@@ -8,12 +8,20 @@ test("user message includes the requirement, its id, and all context", () => {
     ideaText: "an app that checks the weather",
     problemStatement: "Commuters need a fast answer.",
     goals: ["Answer in under five seconds"],
+    siblingRequirements: [
+      { id: "FR-1", text: "User can enter a city name." },
+      { id: "FR-2", text: "User can view a five-day forecast." },
+    ],
+    openQuestions: ["Should the app support multiple cities?"],
   });
   assert.match(message, /id: FR-3/);
   assert.match(message, /displays the current temperature/);
   assert.match(message, /an app that checks the weather/);
   assert.match(message, /Commuters need a fast answer\./);
   assert.match(message, /- Answer in under five seconds/);
+  assert.match(message, /\[FR-1\]: User can enter a city name\./);
+  assert.match(message, /\[FR-2\]: User can view a five-day forecast\./);
+  assert.match(message, /Q1\. Should the app support multiple cities\?/);
 });
 
 test("user message marks an empty goals list", () => {
@@ -22,8 +30,12 @@ test("user message marks an empty goals list", () => {
     ideaText: "i",
     problemStatement: "p",
     goals: [],
+    siblingRequirements: [],
+    openQuestions: [],
   });
   assert.match(message, /\(none stated\)/);
+  assert.match(message, /other requirements.*\n\(none\)/);
+  assert.match(message, /open questions.*\n\(none\)/);
 });
 
 /* A well-formed failed check, used as the base for the rubric cases. */

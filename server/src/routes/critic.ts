@@ -63,6 +63,13 @@ export function criticRouter(store: SessionStore): Router {
           assumption: null,
         });
       }
+      /* Build a lightweight sibling list: every other requirement's id+text,
+       * so the critic can see whether an apparent ambiguity is already
+       * resolved by a neighboring requirement (prompt revision 2026-07-03). */
+      const siblingRequirements = prd.functionalRequirements
+        .filter((s) => s.id !== r.id)
+        .map((s) => ({ id: s.id, text: s.text }));
+
       return callLLM(
         "critic",
         {
@@ -70,6 +77,8 @@ export function criticRouter(store: SessionStore): Router {
           ideaText: project.ideaText,
           problemStatement: prd.problemStatement,
           goals: prd.goals,
+          siblingRequirements,
+          openQuestions: prd.openQuestions,
         },
         { session, apiKey },
       );
