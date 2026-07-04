@@ -17,18 +17,18 @@ This tool makes the clarify -> draft -> critique -> revise -> final review loop 
 4. **Revise** -
    - **Local**: resolve an individual flag by accepting the suggested rewrite, replying with your own feedback, confirming intent, or moving the requirement out of scope.
    - **Global**: comment on any section or chat with Draftsmith about the whole document (`revise_global`); the change is applied as a diff and the critic re-checks whatever it touched in the background.
-5. **Final review and export** - a lead-engineer review agent gives a go/no-go verdict on implementation risk, walking a 5-item coherence checklist (sum/balance invariants, contradictions and derived views, entity lifecycle, per-context vs global scoping, open-question consistency).
-   Only high-severity findings block; medium/low findings ride along as non-blocking notes.
-   Each finding can be resolved three ways: **Apply Fix** (the reviewer's recommendation), **Respond** (your own direction for how to handle it), or **Dismiss** (accepted risk, never re-raised on re-runs).
+5. **Final review and export** - a lead-engineer review agent gives a go/no-go verdict on implementation readiness, working through three internal passes: inventory the product, verify it against five coherence principles (invariants that must hold in every case, one-concept-one-definition, entity lifecycles and read paths, per-context vs global scoping, open-question consistency), then judge.
+   Every finding must name a concrete failure scenario and point at a real requirement; only certain, specification-level defects block export, while product questions and lower-confidence notes ride along as non-blocking.
+   Each finding can be resolved three ways: **Apply Fix** (the reviewer's recommendation), **Respond** (your own direction for how to handle it), or **Dismiss** (recorded as a durable accepted-risk decision that survives reloads and is never re-raised on later runs).
    Export downloads the PRD as Markdown.
 
 ## Model configuration and presets
 
 Each pipeline stage runs on its own configurable model (via OpenRouter), with three curated presets:
 
-- **Balanced** (default): GLM 5.2 for clarify/draft/local revision, DeepSeek V4 Flash for the critic, Claude Sonnet 5 for global revision and final review.
-- **Budget** (~95% of quality at ~20% of the cost): DeepSeek V4 Flash, MiniMax M3, and GLM 5.2.
-- **Max quality**: Claude Sonnet 5, Claude Opus 4.8, and Claude Fable 5 on every stage.
+- **Balanced** (default): GLM 5.2 for clarify, draft, and local revision; DeepSeek V4 Flash for the critic; Claude Sonnet 5 for global revision; Claude Opus 4.8 for the final review gate (the strongest model sits at the last, cheapest-to-run gate).
+- **Budget** (~95% of quality at ~20% of the cost): DeepSeek V4 Flash for clarify, critic, and final review; MiniMax M3 for draft and local revision; GLM 5.2 for global revision.
+- **Max quality**: frontier Claude models across every stage - Sonnet 5 (clarify, critic, local revision), Opus 4.8 (draft, global revision), and Fable 5 for the final review.
 
 Per-stage model assignments can be customized anytime on the Settings page, which lists the live OpenRouter catalog with per-1M-token pricing.
 
@@ -52,7 +52,7 @@ It is never logged, never persisted, and never shared server-side.
 cd server
 npm install
 npm run dev     # Express server on http://localhost:3001
-npm test        # unit test suite (node --test, 97 tests)
+npm test        # unit test suite (node --test, 115 tests)
 npm run build   # type check (tsc --noEmit)
 ```
 
@@ -76,4 +76,5 @@ npm run build   # TypeScript check + Vite production bundle
 ## Status
 
 All ten build-order steps are implemented: the full pipeline (clarify, draft, critic, local and global revision, final review), the home/onboarding page, model settings, and gated Markdown export.
-The server has 97 unit tests (agents' message builders and output validators, `callLLM`, model config, routes); broader testing, CI/CD, and logging are deliberately deferred per the spec.
+Work has since moved to hardening the harness itself: the final-review stage enforces the failure-scenario and requirement-anchor gates deterministically in code (not just prompt wording), and dismissed findings persist as durable accepted-risk decisions.
+The server has 115 unit tests (agents' message builders and output validators, the review gates, `callLLM`, model config, routes); broader testing, CI/CD, and logging are deliberately deferred per the spec.
