@@ -32,7 +32,10 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (options.apiKey) headers["x-openrouter-key"] = options.apiKey;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
-  const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+  let baseUrl = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+  if (baseUrl && !/^https?:\/\//i.test(baseUrl)) {
+    baseUrl = `https://${baseUrl}`;
+  }
   const url = `${baseUrl}/api${path}`;
 
   let res: Response;
