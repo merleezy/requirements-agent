@@ -112,7 +112,7 @@ export function HomePage({
           <div className="flex items-center justify-between border-t border-line-200 bg-paper-tint px-10 py-4">
             {backendError ? (
               <div className="font-mono text-[10.5px] font-medium text-defect">
-                Backend unreachable - start the server, then reload.
+                Backend error: {backendError}
               </div>
             ) : error ? (
               <div className="font-mono text-[10.5px] font-medium text-defect">{error}</div>

@@ -35,12 +35,22 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
   const url = `${baseUrl}/api${path}`;
 
-  const res = await fetch(url, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-    signal: options.signal,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: options.method ?? "GET",
+      headers,
+      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      signal: options.signal,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new ApiError(
+      503,
+      "UNREACHABLE",
+      `Could not reach backend at ${url} (${detail}). Ensure backend is running and CORS/VITE_API_URL are configured.`
+    );
+  }
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
