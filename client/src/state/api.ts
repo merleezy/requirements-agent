@@ -55,8 +55,8 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     const code = data?.error?.code ?? "UNKNOWN";
-    const message = data?.error?.message ?? `Request failed (${res.status})`;
-    throw new ApiError(res.status, code, message);
+    const detail = data?.error?.message ?? `Request failed (${res.status}) to ${url}`;
+    throw new ApiError(res.status, code, detail);
   }
   return data as T;
 }
