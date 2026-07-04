@@ -248,6 +248,17 @@ Only certain spec_defects can block; `parseFinalReviewOutput` enforces this stru
 The two-status contract, parser-derived status, re-review convergence rules, 5-issue cap, and temporal-defaults exclusion were deliberately left intact.
 A defect log now lives at `docs/defect-log.md` (one entry per pipeline-escaping defect, classified capability / rule blind spot / rule gap), with offending PRD JSONs to be saved under `docs/defect-prds/` as a replay-able regression set for future prompt changes.
 
+A harness pass followed (2026-07-03, see `docs/agent-prompts.md` Revisions eleventh pass), the first step of evolving the harness itself rather than its prompts: the recurring convergence and low-value-finding problems the prompt passes kept patching by wording are moved into deterministic code, so the guarantees hold across model tiers.
+Two independent increments landed on the final-review stage:
+
+- Phase 2 (failure-scenario + anchor gates): findings must carry a concrete `failureScenario`, and a new pure `applyReviewGates` (`server/src/agents/finalReview.ts`), applied by the route where the PRD ids live, drops any finding that is both unanchored (its `location` cites no real requirement id or known section) and unsubstantiated, and demotes to a non-blocking note any high finding failing either test.
+  The callLLM-path parser stays context-free (it only passes `failureScenario` through); all context-dependent gating - anchor validation, decision suppression, re-sort/cap/renumber/status - lives in the one route-applied function, which is why the existing parser tests were untouched.
+- Phase 1 (durable decision registry): dismissing a final-review finding now records a durable `Decision` (`kind: "accepted_risk"`) on the session via `POST /api/decisions`, round-tripped by `GET /api/session` so it survives a reload, instead of ephemeral `App` state that only reached the reviewer through client-passed `previousFindings`.
+  The reviewer gets accepted decisions as an "Accepted Decisions" block it must not re-raise, and `applyReviewGates` structurally suppresses any finding sharing a requirement id and category with one (conservative: same-anchor different-category is not suppressed).
+  The final-review route also persists `not_addressed` previousFindings into the registry, closing the dismiss-then-reload gap.
+- Scope was deliberately narrow: `Decision.kind` is a single-member union for now (decided open questions already resolve via revise-global deletion, accepted scope via the critic's `acceptedAsIs`), shaped to extend without rework; the critic stage was left unchanged (its findings are inherently anchored, one requirement per call).
+  These are phases 1-2 of a longer plan (`.claude/plans/lazy-chasing-tome.md`); later phases (entity/action extraction, CRUD/lifecycle graph checks, implementation-trace review) are not started.
+
 The spec's build order was updated to close a gap found after step 2: the original 8 steps only ever produced the PRD document view, with no scheduled page for idea input, API key onboarding, or model settings.
 It's now 10 steps - see `docs/requirements-agent-spec.md`'s "Suggested build order" section for the current numbering and the reasoning for where the two new steps (home/onboarding at step 4, settings at step 8) were inserted.
 Steps 1-3 are unaffected by the renumbering.

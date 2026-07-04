@@ -27,7 +27,7 @@ import {
   type ReviseLocalResult,
 } from "./state/reviseLocal";
 import { sendGlobalFeedback } from "./state/reviseGlobal";
-import { runFinalReview, type PreviousFindingPayload } from "./state/finalReview";
+import { recordAcceptedRisk, runFinalReview, type PreviousFindingPayload } from "./state/finalReview";
 import { useApiKey, useServerSession } from "./state/session";
 import type { ChatMessage, Comment, PRD, PrdItem, Requirement } from "./types";
 import {
@@ -418,6 +418,15 @@ export default function App() {
 
   const handleDismissIssue = (issueId: string) => {
     setDismissedIssueIds((s) => new Set(s).add(issueId));
+    /* Persist the dismissal as a durable accepted risk so the reviewer won't
+     * re-raise it after a reload or on a fresh run. Fire-and-forget: a failure
+     * is non-fatal (the previousFindings path still carries it this session). */
+    const issue = finalReviewResult?.issues.find((i) => i.id === issueId);
+    if (issue) {
+      void recordAcceptedRisk(issue.location, issue.explanation, issue.category).catch(
+        () => {},
+      );
+    }
   };
 
   const handleRespondToIssue = async (issue: FinalReviewIssue, userThoughts: string) => {

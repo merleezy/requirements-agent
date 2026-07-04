@@ -1,10 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  applyReviewGates,
   buildFinalReviewUserMessage,
   parseFinalReviewOutput,
+  type FinalReviewIssue,
+  type FinalReviewOutput,
 } from "./finalReview.ts";
-import type { PRD, Project } from "../types.ts";
+import type { Decision, PRD, Project } from "../types.ts";
 
 const sampleProject: Project = {
   title: "Receipt Scanner App",
@@ -245,4 +248,171 @@ test("issues are ordered by severity and truncated to 8", () => {
     parsed.issues.map((i) => i.severity),
     ["high", "medium", "medium", "medium", "low", "low", "low", "low"],
   );
+});
+
+test("parseFinalReviewOutput passes failureScenario through, defaulting to empty", () => {
+  const parsed = parseFinalReviewOutput({
+    status: "REQUIRES_CHANGES",
+    summary: "One with, one without.",
+    issues: [
+      {
+        ...issue("high", "FR-1 and FR-2 contradict."),
+        failureScenario: "Two teams read FR-1 as OCR-only and FR-2 as manual-only.",
+      },
+      issue("medium", "No scenario given."),
+    ],
+  });
+
+  assert.equal(
+    parsed.issues[0].failureScenario,
+    "Two teams read FR-1 as OCR-only and FR-2 as manual-only.",
+  );
+  assert.equal(parsed.issues[1].failureScenario, "");
+});
+
+test("buildFinalReviewUserMessage lists accepted decisions the reviewer must not re-raise", () => {
+  const msg = buildFinalReviewUserMessage({
+    project: sampleProject,
+    clarificationQa: [],
+    prd: samplePrd,
+    decisions: [
+      {
+        id: "D-1",
+        kind: "accepted_risk",
+        anchor: "FR-1",
+        statement: "Falling back to manual entry when OCR fails is acceptable.",
+        category: "Lifecycle",
+        decidedAt: new Date().toISOString(),
+      },
+    ],
+  });
+
+  assert.ok(msg.includes("Accepted decisions"));
+  assert.ok(msg.includes("Falling back to manual entry when OCR fails is acceptable."));
+});
+
+/* applyReviewGates: the anchor + substantiation + accepted-decision gates the
+ * route applies after the (context-free) parser. */
+const gateIssue = (o: Partial<FinalReviewIssue> = {}): FinalReviewIssue => ({
+  id: "FR-001",
+  severity: "high",
+  type: "spec_defect",
+  confidence: "certain",
+  category: "General",
+  location: "FR-1",
+  explanation: "FR-1 and FR-2 contradict.",
+  failureScenario: "A concrete failing case.",
+  recommendation: "",
+  ...o,
+});
+
+const gateOutput = (issues: FinalReviewIssue[]): FinalReviewOutput => ({
+  status: "REQUIRES_CHANGES",
+  summary: "",
+  issues,
+});
+
+const validFr = () => new Set(["fr-1", "fr-2"]);
+
+test("applyReviewGates demotes an unsubstantiated high to a non-blocking note", () => {
+  const out = applyReviewGates(gateOutput([gateIssue({ failureScenario: "" })]), {
+    validAnchors: validFr(),
+    acceptedDecisions: [],
+  });
+
+  assert.equal(out.issues.length, 1);
+  assert.equal(out.issues[0].severity, "medium");
+  assert.equal(out.status, "PASS");
+});
+
+test("applyReviewGates demotes a high whose location matches no requirement id", () => {
+  const out = applyReviewGates(gateOutput([gateIssue({ location: "FR-99" })]), {
+    validAnchors: validFr(),
+    acceptedDecisions: [],
+  });
+
+  assert.equal(out.issues[0].severity, "medium");
+  assert.equal(out.status, "PASS");
+});
+
+test("applyReviewGates keeps a high anchored to a section by keyword", () => {
+  const out = applyReviewGates(
+    gateOutput([gateIssue({ location: "openQuestions vs outOfScope" })]),
+    { validAnchors: validFr(), acceptedDecisions: [] },
+  );
+
+  assert.equal(out.issues[0].severity, "high");
+  assert.equal(out.status, "REQUIRES_CHANGES");
+});
+
+test("applyReviewGates drops a finding that is both unanchored and unsubstantiated", () => {
+  const out = applyReviewGates(
+    gateOutput([gateIssue({ location: "somewhere vague", failureScenario: "" })]),
+    { validAnchors: validFr(), acceptedDecisions: [] },
+  );
+
+  assert.equal(out.issues.length, 0);
+  assert.equal(out.status, "PASS");
+});
+
+test("applyReviewGates keeps a substantiated, anchored high as blocking", () => {
+  const out = applyReviewGates(gateOutput([gateIssue()]), {
+    validAnchors: validFr(),
+    acceptedDecisions: [],
+  });
+
+  assert.equal(out.issues[0].severity, "high");
+  assert.equal(out.status, "REQUIRES_CHANGES");
+});
+
+test("applyReviewGates suppresses a finding matching an accepted decision (same anchor + category)", () => {
+  const decision: Decision = {
+    id: "D-1",
+    kind: "accepted_risk",
+    anchor: "FR-1",
+    statement: "accepted",
+    category: "Lifecycle",
+    decidedAt: new Date().toISOString(),
+  };
+  const out = applyReviewGates(gateOutput([gateIssue({ category: "Lifecycle" })]), {
+    validAnchors: validFr(),
+    acceptedDecisions: [decision],
+  });
+
+  assert.equal(out.issues.length, 0);
+});
+
+test("applyReviewGates does NOT suppress a same-anchor finding in a different category", () => {
+  const decision: Decision = {
+    id: "D-1",
+    kind: "accepted_risk",
+    anchor: "FR-1",
+    statement: "accepted",
+    category: "Lifecycle",
+    decidedAt: new Date().toISOString(),
+  };
+  const out = applyReviewGates(gateOutput([gateIssue({ category: "Invariant" })]), {
+    validAnchors: validFr(),
+    acceptedDecisions: [decision],
+  });
+
+  assert.equal(out.issues.length, 1);
+});
+
+test("applyReviewGates renumbers and re-sorts the survivors", () => {
+  const out = applyReviewGates(
+    gateOutput([
+      gateIssue({ id: "FR-001", severity: "low", explanation: "low note", location: "FR-1" }),
+      gateIssue({ id: "FR-002", location: "vague", failureScenario: "" }),
+      gateIssue({ id: "FR-003", severity: "high", explanation: "real", location: "FR-2" }),
+    ]),
+    { validAnchors: validFr(), acceptedDecisions: [] },
+  );
+
+  assert.equal(out.issues.length, 2);
+  assert.equal(out.issues[0].id, "FR-001");
+  assert.equal(out.issues[0].severity, "high");
+  assert.equal(out.issues[1].id, "FR-002");
+  assert.equal(out.issues[1].severity, "low");
+  assert.equal(out.status, "REQUIRES_CHANGES");
 });

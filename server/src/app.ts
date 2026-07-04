@@ -7,6 +7,7 @@ import { HttpError } from "./errors.ts";
 import { SessionStore } from "./session/store.ts";
 import { clarifyRouter } from "./routes/clarify.ts";
 import { criticRouter } from "./routes/critic.ts";
+import { decisionsRouter } from "./routes/decisions.ts";
 import { draftRouter } from "./routes/draft.ts";
 import { finalReviewRouter } from "./routes/finalReview.ts";
 import { modelsRouter } from "./routes/models.ts";
@@ -51,6 +52,7 @@ export function createApp(store: SessionStore = new SessionStore()) {
   app.use("/api/revise-local", reviseLocalRouter(store));
   app.use("/api/revise-global", reviseGlobalRouter(store));
   app.use("/api/final-review", finalReviewRouter(store));
+  app.use("/api/decisions", decisionsRouter(store));
 
   /* Unknown /api paths get the same JSON error shape as everything else. */
   app.use("/api", (_req: Request, res: Response) => {

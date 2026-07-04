@@ -534,6 +534,12 @@ Status rule: return REQUIRES_CHANGES only when at least one high-severity issue 
 
 ---
 
+Substantiation
+
+Every finding you report MUST carry a concrete failureScenario: a specific input, state, or sequence of steps for which a team building exactly what the document says would produce wrong, ambiguous, or contradictory behavior. Name the actual case, not the category ("an expense of $10 split equally among 3 people, where the shares cannot divide evenly", not "rounding may be an issue"). If you cannot state such a scenario, you do not have a finding - do not report it. A finding whose failureScenario is missing or merely restates the category carries no blocking weight.
+
+---
+
 Materiality
 
 Before reporting any finding, apply this test: if this document were handed to three experienced engineers, would at least two of them stop and ask this question before writing code? If not, do not report it.
@@ -568,6 +574,12 @@ Each successive round must converge toward PASS, not uncover an ever-growing lis
 
 ---
 
+Accepted Decisions
+
+The user message may include a list of decisions the user has already accepted (settled risks). These are closed. Never report a finding that restates one of them, and never report a reworded or re-categorized version of one - they are the user's explicit accepted risk, not an oversight.
+
+---
+
 Strict Constraints
 
 - Do NOT introduce new functional requirements that are not already implied by the PRD.
@@ -589,6 +601,7 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
       "category": "...",
       "location": "...",
       "explanation": "...",
+      "failureScenario": "...",
       "recommendation": "..."
     }
   ]
@@ -596,10 +609,12 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
 
 The "summary" states the readiness verdict and the reason for it in one or two sentences.
 The "location" field MUST use the exact requirement IDs from the PRD (e.g. "REQ-007, REQ-015" if the PRD uses REQ-nnn, or "FR-7, FR-15" if the PRD uses FR-n). Copy the IDs verbatim from the document - do not invent shorthand or renumber them. Include "openQuestions" or "outOfScope" when those sections are involved.
+The "failureScenario" field states the concrete failing case, per Substantiation above.
 
 [USER MESSAGE: full current PRD JSON + the original idea + clarification Q&A,
 plus, on re-runs, the previous round's findings each marked "fix applied" or
-"left as-is"]```
+"left as-is", plus any accepted decisions (settled risks) the reviewer must
+not re-raise]```
 
 ---
 
@@ -732,6 +747,17 @@ Part two (this session) reacted to the next PRD, which fixed most of the above b
 - Critic: open questions are passed so an ambiguity that is explicitly deferred in an open question is treated as an intentional product decision, not a defect.
   This does not regress the fifth-pass "requirements must not presuppose an open question" rule: presupposition is not a critic dimension (final review owns defer-and-decide contradictions), so the critic simply stops flagging openly-deferred ambiguity.
 - The critic prompt in section 3 was re-synced to the shipped `server/src/agents/critic.ts` (this pass had drifted the code ahead of the doc), and pre-existing em-dashes in that prompt were replaced with plain dashes.
+
+2026-07-03 - eleventh pass, final review only - harness change (requested by Isaac after a design discussion on evolving the harness itself rather than its prompts; the prompt edits below exist to serve structural enforcement in code, not the reverse). Two independent increments:
+
+- Phase 2 (failure-scenario gate + anchor validation): the reviewer must now supply a concrete `failureScenario` per finding (new Substantiation section and output field), and the harness enforces two gates the prompt alone cannot.
+  A new pure `applyReviewGates` (`server/src/agents/finalReview.ts`), applied by the route where the PRD ids are available, drops a finding that is both unanchored (its `location` cites no real requirement id or known section) and unsubstantiated (no `failureScenario`), and demotes any high finding that fails either test to a non-blocking note - never dropping a substantiated-or-anchored one, the same "a missing field is a compliance miss, not proof of no defect" stance as the ninth pass's type/confidence demotions.
+  The callLLM-path parser stays context-free (it only passes `failureScenario` through); all context-dependent gating lives in the one route-applied function, which also re-sorts, re-caps, renumbers, and re-derives status.
+- Phase 1 (durable decision registry): a dismissed finding becomes a durable `Decision` (`kind: "accepted_risk"`) on the session (`POST /api/decisions`, round-tripped by `GET /api/session`), instead of ephemeral client state that only survived via client-passed `previousFindings`.
+  The reviewer is given these as a new "Accepted Decisions" block it must not re-raise, and `applyReviewGates` structurally suppresses any finding sharing a requirement id and category with an accepted decision - the durable, structural counterpart to the fourth pass's prompt-only "left as-is is accepted risk" rule.
+  Conservative by construction: same-anchor different-category findings are not suppressed.
+- Why this is a harness pass, not a prompt pass: the recurring convergence and low-value-finding problems the fourth through tenth passes patched by wording are here moved into deterministic code (drop/demote/suppress on structural predicates), so the guarantees hold regardless of model tier.
+  Nothing else in section 6 changed; the two-status contract, parser-derived status, re-review rules, 5-issue cap, and temporal-defaults exclusion are all intact.
 - Deliberately NOT changed: the one-flag-per-requirement-per-pass output contract, per-requirement isolation, and concurrency/failure-tolerance in the critic route.
   Adding sibling text makes each critic prompt scale with PRD size; left as-is because the constant is tiny at realistic sizes and the fix, if it ever matters, is relevance-scoping the siblings, not a blind cap (which could drop the very sibling that closes a gap).
 - Client (`client/src/App.tsx`, same Gemini session): the final-review Apply-Fix / Respond / Apply-All handlers now read the revise-global `applied` flag and, on a no-op, leave the finding open with a note instead of announcing success.
