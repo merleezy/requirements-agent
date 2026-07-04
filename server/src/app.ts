@@ -20,7 +20,9 @@ export function createApp(store: SessionStore = new SessionStore()) {
 
   /* CORS Middleware for cross-origin deployments (e.g. Vercel frontend -> Railway backend). */
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const allowedOrigin = process.env.CORS_ORIGIN ?? req.headers.origin ?? "*";
+    const rawOrigin = process.env.CORS_ORIGIN ?? req.headers.origin ?? "*";
+    const allowedOrigin =
+      rawOrigin === "*" ? "*" : rawOrigin.trim().replace(/\/+$/, "");
     res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader(
