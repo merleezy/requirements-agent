@@ -32,7 +32,10 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (options.apiKey) headers["x-openrouter-key"] = options.apiKey;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
-  const res = await fetch(`/api${path}`, {
+  const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+  const url = `${baseUrl}/api${path}`;
+
+  const res = await fetch(url, {
     method: options.method ?? "GET",
     headers,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,

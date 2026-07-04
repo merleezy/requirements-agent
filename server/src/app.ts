@@ -18,6 +18,25 @@ export function createApp(store: SessionStore = new SessionStore()) {
   const app = express();
   app.use(express.json({ limit: "1mb" }));
 
+  /* CORS Middleware for cross-origin deployments (e.g. Vercel frontend -> Railway backend). */
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const allowedOrigin = process.env.CORS_ORIGIN ?? req.headers.origin ?? "*";
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, x-session-id, x-openrouter-key"
+    );
+    res.setHeader("Access-Control-Max-Age", "86400");
+
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+
+    next();
+  });
+
   app.get("/api/health", (_req: Request, res: Response) => {
     res.json({ ok: true });
   });
