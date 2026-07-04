@@ -52,6 +52,15 @@ See the "Code organization" section of the spec for the full reasoning - this is
 - Prefer working, reviewable increments over large unreviewed diffs.
   A smaller piece I can actually read beats a bigger piece I have to trust.
 
+## Git workflow
+
+- Do not work directly on `main`.
+  That has been the habit on this repo and it stops now: every change, code or docs, lands on its own branch cut from `main` and comes back through a pull request - even small ones, so there is always a reviewable diff before anything hits `main`.
+- One branch per unit of work, named for it (`feat/...`, `fix/...`, `docs/...`), scoped to a single reviewable change rather than an accumulation of unrelated edits.
+- Reach for a git worktree when the work is long-running, experimental, or spans more than one branch at once - it keeps branches physically separate instead of stashing back and forth on a single checkout, and keeps `main`'s working tree clean.
+- The standing rule still holds: only commit or push when I ask.
+  When I do, branch first and open the PR - never fall back to committing onto `main`, even if pushing is fiddly on this machine.
+
 ## Picking the right model for workflows and subagents
 
 Rankings, higher = better. Cost reflects what I pay, not list price. Intelligence is how hard a problem you can hand the model unsupervised. Taste covers UI/UX, code quality, API design, and copy.
