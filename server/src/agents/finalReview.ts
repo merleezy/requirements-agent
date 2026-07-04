@@ -1,4 +1,4 @@
-import type { ClarificationPair, PRD, Project } from "../types.ts";
+import type { ClarificationPair, Decision, PRD, Project } from "../types.ts";
 import { formatClarifications } from "./clarifications.ts";
 
 export const finalReviewPrompt = `You are the lead software engineer assessing whether a nearly finished Product Requirements Document is ready for a competent development team to begin implementation.
@@ -76,6 +76,12 @@ Status rule: return REQUIRES_CHANGES only when at least one high-severity issue 
 
 ---
 
+Substantiation
+
+Every finding you report MUST carry a concrete failureScenario: a specific input, state, or sequence of steps for which a team building exactly what the document says would produce wrong, ambiguous, or contradictory behavior. Name the actual case, not the category ("an expense of $10 split equally among 3 people, where the shares cannot divide evenly", not "rounding may be an issue"). If you cannot state such a scenario, you do not have a finding - do not report it. A finding whose failureScenario is missing or merely restates the category carries no blocking weight.
+
+---
+
 Materiality
 
 Before reporting any finding, apply this test: if this document were handed to three experienced engineers, would at least two of them stop and ask this question before writing code? If not, do not report it.
@@ -110,6 +116,12 @@ Each successive round must converge toward PASS, not uncover an ever-growing lis
 
 ---
 
+Accepted Decisions
+
+The user message may include a list of decisions the user has already accepted (settled risks). These are closed. Never report a finding that restates one of them, and never report a reworded or re-categorized version of one - they are the user's explicit accepted risk, not an oversight.
+
+---
+
 Strict Constraints
 
 - Do NOT introduce new functional requirements that are not already implied by the PRD.
@@ -131,6 +143,7 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
       "category": "...",
       "location": "...",
       "explanation": "...",
+      "failureScenario": "...",
       "recommendation": "..."
     }
   ]
@@ -138,6 +151,7 @@ Output ONLY this JSON shape, with no other text and no markdown code fences:
 
 The "summary" states the readiness verdict and the reason for it in one or two sentences.
 The "location" field MUST use the exact requirement IDs from the PRD (e.g. "REQ-007, REQ-015" if the PRD uses REQ-nnn, or "FR-7, FR-15" if the PRD uses FR-n). Copy the IDs verbatim from the document - do not invent shorthand or renumber them. Include "openQuestions" or "outOfScope" when those sections are involved.
+The "failureScenario" field states the concrete failing case, per Substantiation above.
 `;
 
 export type IssueSeverity = "high" | "medium" | "low";
@@ -159,6 +173,9 @@ export interface FinalReviewIssue {
   category: string;
   location: string;
   explanation: string;
+  /* The concrete failing case behind the finding (Substantiation rule). A
+   * finding without one carries no blocking weight - see applyReviewGates. */
+  failureScenario: string;
   recommendation: string;
 }
 
@@ -187,10 +204,14 @@ export interface FinalReviewInput {
   clarificationQa: ClarificationPair[];
   prd: PRD;
   previousFindings?: PreviousFinding[];
+  /* Durable accepted-risk decisions the reviewer must not re-raise (Phase 1).
+   * Distinct from previousFindings (this round's client-passed dispositions):
+   * these persist across reloads and rounds on the session. */
+  decisions?: Decision[];
 }
 
 export function buildFinalReviewUserMessage(input: FinalReviewInput): string {
-  const { project, clarificationQa, prd, previousFindings } = input;
+  const { project, clarificationQa, prd, previousFindings, decisions } = input;
 
   const prdJson = JSON.stringify(
     {
@@ -224,6 +245,13 @@ export function buildFinalReviewUserMessage(input: FinalReviewInput): string {
           .join("\n")}`
       : "";
 
+  const decisionsSection =
+    decisions && decisions.length > 0
+      ? `\nAccepted decisions (settled risks - apply the Accepted Decisions rule, do NOT re-raise these):\n${decisions
+          .map((d) => `- [${d.category} | at ${d.anchor}] ${d.statement}`)
+          .join("\n")}`
+      : "";
+
   /* Extract example IDs so the model uses the exact format in the location
    * field (e.g. "REQ-007" not "FR-7"). */
   const exampleIds = prd.functionalRequirements.slice(0, 2).map((r) => r.id);
@@ -237,7 +265,7 @@ ${prdJson}
 
 Original Idea:
 ${project.ideaText}
-${qaSection.length > 0 ? `\nClarifications:\n${qaSection}` : ""}${previousSection}${idNote}`;
+${qaSection.length > 0 ? `\nClarifications:\n${qaSection}` : ""}${previousSection}${decisionsSection}${idNote}`;
 }
 
 /* The prompt caps issues at 5; tolerate an overshooting model by keeping the
@@ -298,11 +326,22 @@ export function parseFinalReviewOutput(raw: unknown): FinalReviewOutput {
     const category = typeof i.category === "string" ? i.category.trim() : "General";
     const location = typeof i.location === "string" ? i.location.trim() : "PRD Document";
     const explanation = typeof i.explanation === "string" ? i.explanation.trim() : "";
+    const failureScenario =
+      typeof i.failureScenario === "string" ? i.failureScenario.trim() : "";
     const recommendation = typeof i.recommendation === "string" ? i.recommendation.trim() : "";
 
     if (explanation.length === 0) continue;
 
-    parsed.push({ severity, type, confidence, category, location, explanation, recommendation });
+    parsed.push({
+      severity,
+      type,
+      confidence,
+      category,
+      location,
+      explanation,
+      failureScenario,
+      recommendation,
+    });
   }
 
   parsed.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
@@ -319,4 +358,106 @@ export function parseFinalReviewOutput(raw: unknown): FinalReviewOutput {
     summary,
     issues,
   };
+}
+
+/* The context-dependent review gates, applied by the route (which has the PRD
+ * ids and the session's accepted decisions - the callLLM-path parser is
+ * context-free and cannot). See the Substantiation and Accepted Decisions
+ * prompt sections. */
+export interface ReviewGateContext {
+  /* Lowercased requirement ids the location may legitimately cite, e.g.
+   * "fr-1". Section references (openQuestions, outOfScope, ...) are matched
+   * separately against a fixed keyword list. */
+  validAnchors: Set<string>;
+  acceptedDecisions: Decision[];
+}
+
+/* Sections a finding may anchor to besides a requirement id. Lowercased and
+ * matched as substrings so both "openQuestions" and "open questions" hit. */
+const SECTION_KEYWORDS = [
+  "openquestions",
+  "open questions",
+  "outofscope",
+  "out of scope",
+  "goals",
+  "targetusers",
+  "target users",
+  "problemstatement",
+  "problem statement",
+  "summary",
+];
+
+/* Requirement-id-shaped tokens (e.g. FR-7, REQ-15), lowercased. */
+const REQUIREMENT_ID_RE = /\b[a-z]+-\d+\b/g;
+
+function requirementIdsIn(location: string): string[] {
+  return location.toLowerCase().match(REQUIREMENT_ID_RE) ?? [];
+}
+
+/* A location is anchored if it cites a real requirement id or names a known
+ * section. */
+function locationIsAnchored(location: string, validAnchors: Set<string>): boolean {
+  if (requirementIdsIn(location).some((id) => validAnchors.has(id))) return true;
+  const lower = location.toLowerCase();
+  return SECTION_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+/* Settled if the finding shares a requirement id with an accepted decision
+ * AND names the same category (case-insensitive). Conservative on purpose: a
+ * same-requirement finding in a different category is a genuinely new concern
+ * and is NOT suppressed. */
+function matchesAcceptedDecision(
+  issue: { location: string; category: string },
+  decisions: Decision[],
+): boolean {
+  const issueIds = new Set(requirementIdsIn(issue.location));
+  if (issueIds.size === 0) return false;
+  const cat = issue.category.trim().toLowerCase();
+  return decisions.some(
+    (d) =>
+      d.category.trim().toLowerCase() === cat &&
+      requirementIdsIn(d.anchor).some((id) => issueIds.has(id)),
+  );
+}
+
+/* Applies the anchor, substantiation, and accepted-decision gates, then
+ * re-sorts, re-caps, renumbers, and re-derives the blocking status:
+ * - a finding matching an accepted decision is dropped (settled);
+ * - a finding that is both unanchored and unsubstantiated is dropped (noise);
+ * - a high finding failing either the anchor or substantiation test is
+ *   demoted to a non-blocking note rather than dropped (a missing field is a
+ *   compliance miss, not proof there is no defect - same stance as the
+ *   inferred/product_question demotions in parseFinalReviewOutput). */
+export function applyReviewGates(
+  output: FinalReviewOutput,
+  ctx: ReviewGateContext,
+): FinalReviewOutput {
+  const kept: Omit<FinalReviewIssue, "id">[] = [];
+
+  for (const issue of output.issues) {
+    if (matchesAcceptedDecision(issue, ctx.acceptedDecisions)) continue;
+
+    const anchored = locationIsAnchored(issue.location, ctx.validAnchors);
+    const substantiated = issue.failureScenario.length > 0;
+    if (!anchored && !substantiated) continue;
+
+    const severity: IssueSeverity =
+      issue.severity === "high" && (!anchored || !substantiated)
+        ? "medium"
+        : issue.severity;
+
+    const { id: _id, ...rest } = issue;
+    kept.push({ ...rest, severity });
+  }
+
+  kept.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);
+
+  const issues: FinalReviewIssue[] = kept.slice(0, MAX_ISSUES).map((issue, index) => ({
+    id: `FR-${String(index + 1).padStart(3, "0")}`,
+    ...issue,
+  }));
+
+  const status = issues.some((i) => i.severity === "high") ? "REQUIRES_CHANGES" : "PASS";
+
+  return { status, summary: output.summary, issues };
 }

@@ -10,6 +10,9 @@ export interface FinalReviewIssue {
   category: string;
   location: string;
   explanation: string;
+  /* The concrete failing case behind the finding. Optional for back-compat
+   * with results from older server versions that predate the field. */
+  failureScenario?: string;
   recommendation: string;
 }
 
@@ -122,6 +125,13 @@ function IssueCard({
       <div className="text-[13px] leading-normal text-ink-950 font-medium">
         {issue.explanation}
       </div>
+
+      {issue.failureScenario && (
+        <div className="text-[12.5px] leading-normal text-ink-600 border-l-2 border-defect-line pl-2.5 mt-1">
+          <span className="font-semibold text-defect">If built as written: </span>
+          {issue.failureScenario}
+        </div>
+      )}
 
       {issue.recommendation && (
         <div className="text-[12.5px] leading-normal text-ink-600 border-l-2 border-accent pl-2.5 mt-1">

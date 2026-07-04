@@ -102,6 +102,24 @@ export interface Annotation {
   resolved: boolean;
 }
 
+/* A settled decision the user has made about the PRD, kept as a durable
+ * server-side fact so a later review pass is structurally prevented from
+ * re-raising it (convergence-by-state, not by prompt discipline).
+ *
+ * kind is deliberately a single-member union for now: "accepted_risk" is a
+ * final-review finding the user dismissed (accepted the risk of). Decided
+ * open questions already resolve via revise-global deletion, and accepted
+ * scope via the critic's Requirement.acceptedAsIs, so those don't need a
+ * Decision yet - the type is shaped to grow to them without rework. */
+export interface Decision {
+  id: string; /* "D-1"... - server-assigned, append-only */
+  kind: "accepted_risk";
+  anchor: string; /* the finding's location: requirement id(s)/section it concerns */
+  statement: string; /* what was accepted (the finding's explanation) */
+  category: string;
+  decidedAt: string; /* ISO timestamp */
+}
+
 /* Pipeline history, kept so agent runs are visible/debuggable (spec: AgentRun).
  * input/output are the JSON passed to / returned by callLLM - never the API key. */
 export interface AgentRun {

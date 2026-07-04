@@ -29,3 +29,19 @@ export async function runFinalReview(
         : undefined,
   });
 }
+
+/* Records a dismissed finding as a durable accepted risk on the session, so
+ * the reviewer won't re-raise it on a later round or after a reload. No API
+ * key: this is pure session bookkeeping, not an LLM call. */
+export async function recordAcceptedRisk(
+  anchor: string,
+  statement: string,
+  category: string,
+): Promise<void> {
+  const sessionId = sessionStorage.getItem("ra.sessionId") ?? undefined;
+  await api<{ decision: unknown }>("/decisions", {
+    method: "POST",
+    sessionId,
+    body: { anchor, statement, category },
+  });
+}

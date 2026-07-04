@@ -1,8 +1,9 @@
 import { Router, type Request, type Response } from "express";
 import { HttpError } from "../errors.ts";
-import type { PreviousFinding } from "../agents/finalReview.ts";
+import { applyReviewGates, type PreviousFinding } from "../agents/finalReview.ts";
 import { callLLM } from "../llm/callLLM.ts";
 import type { SessionStore } from "../session/store.ts";
+import { recordAcceptedRisk } from "./decisions.ts";
 import { requireApiKey, requireClarificationPairs, requireSession } from "./require.ts";
 
 /* Findings from the client's previous review round, echoed back so the
@@ -73,13 +74,38 @@ export function finalReviewRouter(store: SessionStore): Router {
         : requireClarificationPairs(body.clarifications);
     const previousFindings = requirePreviousFindings(body?.previousFindings);
 
+    /* Persist any findings the user left as-is as durable accepted risks, so
+     * they survive a reload and later rounds even if the client stops sending
+     * them back as previousFindings. recordAcceptedRisk dedups by
+     * (anchor, statement), so this is idempotent across rounds. */
+    for (const f of previousFindings) {
+      if (f.disposition === "not_addressed") {
+        recordAcceptedRisk(session.decisions, {
+          anchor: f.location,
+          statement: f.explanation,
+          category: f.category,
+        });
+      }
+    }
+
     const output = await callLLM(
       "final_review",
-      { project, clarificationQa, prd, previousFindings },
+      { project, clarificationQa, prd, previousFindings, decisions: session.decisions },
       { session, apiKey },
     );
 
-    res.json(output);
+    /* Context-dependent gates the callLLM-path parser can't apply: validate
+     * anchors against the real requirement ids and suppress anything matching
+     * an accepted decision. */
+    const validAnchors = new Set(
+      prd.functionalRequirements.map((r) => r.id.toLowerCase()),
+    );
+    const gated = applyReviewGates(output, {
+      validAnchors,
+      acceptedDecisions: session.decisions,
+    });
+
+    res.json(gated);
   });
 
   return router;

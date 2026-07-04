@@ -3,6 +3,7 @@ import type {
   Annotation,
   AgentRun,
   ClarifyState,
+  Decision,
   PRD,
   Project,
 } from "../types.ts";
@@ -26,6 +27,10 @@ export interface Session {
   prd: PRD | null;
   annotations: Annotation[];
   agentRuns: AgentRun[];
+  /* Durable settled decisions (accepted risks), fed to the final reviewer so
+   * it can't re-raise them; round-trips through GET /api/session, so they
+   * survive a page reload for the session lifetime. Append-only. */
+  decisions: Decision[];
   modelConfig: ModelConfig;
 }
 
@@ -38,13 +43,33 @@ export interface SessionState {
   prd: PRD | null;
   annotations: Annotation[];
   agentRuns: AgentRun[];
+  decisions: Decision[];
   modelConfig: ModelConfig;
 }
 
 export function toSessionState(session: Session): SessionState {
-  const { id, createdAt, clarify, project, prd, annotations, agentRuns, modelConfig } =
-    session;
-  return { sessionId: id, createdAt, clarify, project, prd, annotations, agentRuns, modelConfig };
+  const {
+    id,
+    createdAt,
+    clarify,
+    project,
+    prd,
+    annotations,
+    agentRuns,
+    decisions,
+    modelConfig,
+  } = session;
+  return {
+    sessionId: id,
+    createdAt,
+    clarify,
+    project,
+    prd,
+    annotations,
+    agentRuns,
+    decisions,
+    modelConfig,
+  };
 }
 
 const IDLE_TTL_MS = 24 * 60 * 60 * 1000; /* expire after 24h without a request */
@@ -68,6 +93,7 @@ export class SessionStore {
       prd: null,
       annotations: [],
       agentRuns: [],
+      decisions: [],
       modelConfig: createModelConfig(),
     };
     this.sessions.set(session.id, session);
