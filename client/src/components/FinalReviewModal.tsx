@@ -64,8 +64,8 @@ function IssueCard({
 
   return (
     <div className="rounded-lg border border-line-300 bg-white p-4 shadow-sm space-y-2.5 transition-all">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 min-w-0">
           <span className="font-mono text-[11px] font-bold text-ink-400">{issue.id}</span>
           <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-600">
             {issue.category}
@@ -81,43 +81,17 @@ function IssueCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
-              issue.severity === "high"
-                ? "bg-defect-tint text-defect border border-defect-line"
-                : issue.severity === "medium"
-                  ? "bg-judgment-tint text-judgment border border-judgment-line"
-                  : "bg-accent-tint text-accent border border-accent-line"
-            }`}
-          >
-            {issue.severity}
-          </span>
-          <Button
-            variant="primary"
-            size="post"
-            disabled={isRevising}
-            onClick={() => onApplySingleAiFix(issue)}
-          >
-            Apply Fix
-          </Button>
-          <Button
-            variant="neutral"
-            size="post"
-            disabled={isRevising}
-            onClick={() => setRespondOpen((v) => !v)}
-          >
-            Respond
-          </Button>
-          <Button
-            variant="judgment-outline"
-            size="post"
-            disabled={isRevising}
-            onClick={() => onDismissIssue(issue.id)}
-          >
-            Dismiss
-          </Button>
-        </div>
+        <span
+          className={`shrink-0 rounded px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
+            issue.severity === "high"
+              ? "bg-defect-tint text-defect border border-defect-line"
+              : issue.severity === "medium"
+                ? "bg-judgment-tint text-judgment border border-judgment-line"
+                : "bg-accent-tint text-accent border border-accent-line"
+          }`}
+        >
+          {issue.severity}
+        </span>
       </div>
 
       <div className="text-[11.5px] font-mono text-ink-500">Location: {issue.location}</div>
@@ -139,6 +113,33 @@ function IssueCard({
           {issue.recommendation}
         </div>
       )}
+
+      <div className="flex items-center justify-end gap-2 pt-1 border-t border-line-200 mt-1">
+        <Button
+          variant="primary"
+          size="post"
+          disabled={isRevising}
+          onClick={() => onApplySingleAiFix(issue)}
+        >
+          Apply Fix
+        </Button>
+        <Button
+          variant="neutral"
+          size="post"
+          disabled={isRevising}
+          onClick={() => setRespondOpen((v) => !v)}
+        >
+          Respond
+        </Button>
+        <Button
+          variant="judgment-outline"
+          size="post"
+          disabled={isRevising}
+          onClick={() => onDismissIssue(issue.id)}
+        >
+          Dismiss
+        </Button>
+      </div>
 
       {respondOpen && (
         <div className="mt-3 pt-3 border-t border-line-200 space-y-2">

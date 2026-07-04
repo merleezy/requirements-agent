@@ -568,16 +568,27 @@ export default function App() {
     activeAbortControllerRef.current = controller;
 
     setRevisingIssueId("ALL");
+    /* Mirror the single-fix instruction (handleApplySingleAiFix) per finding,
+     * including its imperative closing directive. The earlier "preserve all
+     * existing content unless a finding explicitly requires modifying it"
+     * phrasing gave the model an out on borderline (inferred/low) findings, so
+     * Apply All sometimes returned an empty diff while applying the same
+     * finding individually - which carries the imperative - worked. Keep scope
+     * control ("only changes related to these findings") without the escape
+     * hatch. */
     const issuesFormatted = unapplied
       .map(
-        (i) =>
-          `- Location: ${i.location} | Severity: ${i.severity}\n  Finding: ${i.explanation}\n  Recommendation: ${i.recommendation}`,
+        (i, n) =>
+          `${n + 1}. Location (requirement IDs to modify): ${i.location}\n` +
+          `   Severity: ${i.severity}\n` +
+          `   Finding: ${i.explanation}\n` +
+          `   Required Action / Recommendation: ${i.recommendation}`,
       )
-      .join("\n");
+      .join("\n\n");
 
     const instruction =
-      `Treat the current PRD as the canonical document. Preserve all existing content unless a review finding explicitly requires modifying it. ` +
-      `Apply ONLY modifications directly related to the final review findings. Each finding lists the requirement IDs to modify in its Location field:\n${issuesFormatted}`;
+      `Treat the current PRD as the canonical document. The user explicitly requested to apply ALL of the following final review recommendations.\n${issuesFormatted}\n\n` +
+      `INSTRUCTION: For EACH finding above, update the requirement(s) at its Location or add a requirement to implement its recommendation explicitly in the PRD text. Apply only changes related to these findings; leave the rest of the document untouched.`;
 
     dispatch({ type: "sendChat", text: "Apply AI fixes for all remaining Final Review findings" });
     dispatch({ type: "agentChat", text: "Revising PRD for all remaining findings…" });
