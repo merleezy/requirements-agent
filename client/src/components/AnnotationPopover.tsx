@@ -43,7 +43,7 @@ export function AnnotationPopover({
     <div
       ref={popoverRef}
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
-      className="fixed z-50 w-80 rounded-xl border border-line-400 bg-white p-3.5 shadow-xl transition-all"
+      className="fixed z-50 w-80 max-w-[calc(100vw-20px)] rounded-xl border border-line-400 bg-white p-3.5 shadow-xl transition-all"
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="font-mono text-[10.5px] font-semibold uppercase tracking-wider text-accent">

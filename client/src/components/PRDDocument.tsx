@@ -35,7 +35,7 @@ function Section({
   last?: boolean;
 }) {
   return (
-    <div className={`px-10 pt-5 ${last ? "pb-6" : "border-b border-line-100 pb-3"}`}>
+    <div className={`px-5 pt-5 sm:px-10 ${last ? "pb-6" : "border-b border-line-100 pb-3"}`}>
       <div className="mb-3">
         <SectionHeading number={number} title={title} />
         {caption && (
@@ -135,7 +135,9 @@ export function PRDDocument({
         targetLabel,
         position: {
           top: Math.min(window.innerHeight - 220, Math.max(10, rect.bottom + 6)),
-          left: Math.min(window.innerWidth - 340, Math.max(10, rect.left)),
+          /* Clamp within the viewport; on narrow screens the popover itself
+           * shrinks via max-width, so a left edge of 10 always fits. */
+          left: Math.max(10, Math.min(window.innerWidth - 340, rect.left)),
         },
       });
     },
@@ -164,11 +166,11 @@ export function PRDDocument({
       )}
       <div className="w-full max-w-[740px] overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
         {/* Masthead */}
-        <div className="border-b border-line-200 bg-paper-tint px-10 pt-8 pb-6">
+        <div className="border-b border-line-200 bg-paper-tint px-5 pt-7 pb-5 sm:px-10 sm:pt-8 sm:pb-6">
           <div className="mb-[9px] font-mono text-[10px] font-medium tracking-[0.16em] text-ink-400 uppercase">
             Product Requirements Document
           </div>
-          <div className="font-display text-[27px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950">
+          <div className="font-display text-[22px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950 sm:text-[27px]">
             {prd.title}
           </div>
           <div className="mt-1.5 text-[13.5px] leading-normal text-ink-500">{prd.subtitle}</div>

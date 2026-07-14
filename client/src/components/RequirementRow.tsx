@@ -67,8 +67,8 @@ export function RequirementRow({
 
   return (
     <div className="border-b border-line-100 py-3.5">
-      <div className="flex gap-[11px] text-[14px] leading-[1.6] text-ink-950">
-        <span className="mt-px w-[66px] flex-none font-mono text-[11px] font-semibold text-ink-500">
+      <div className="flex flex-col gap-1 text-[14px] leading-[1.6] text-ink-950 sm:flex-row sm:gap-[11px]">
+        <span className="mt-px flex-none font-mono text-[11px] font-semibold text-ink-500 sm:w-[66px]">
           {r.ref}
         </span>
         <HighlightedText
@@ -80,7 +80,7 @@ export function RequirementRow({
 
       {flag && (
         <div
-          className={`mt-2.5 mb-0.5 ml-[78px] max-w-[560px] border-l-2 pl-3.5 ${
+          className={`mt-2.5 mb-0.5 ml-0 max-w-[560px] border-l-2 pl-3.5 sm:ml-[78px] ${
             flag.nature === "defect" ? "border-defect" : "border-judgment"
           }`}
         >

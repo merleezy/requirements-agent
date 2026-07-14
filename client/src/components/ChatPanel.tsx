@@ -16,9 +16,11 @@ interface ChatPanelProps {
   chips: ChatChip[];
   busy: boolean;
   onSend: (text: string) => void;
+  /* Closes the mobile drawer; the close button only renders below lg. */
+  onClose?: () => void;
 }
 
-export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
+export function ChatPanel({ messages, chips, busy, onSend, onClose }: ChatPanelProps) {
   const [draft, setDraft] = useState("");
   /* Scroll the newest message (or the pending bubble) into view - real
    * replies arrive after a round trip, so the user must always see them. */
@@ -43,17 +45,27 @@ export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
   };
 
   return (
-    <div className="flex min-h-0 w-[360px] flex-none flex-col border-l border-line-500 bg-panel">
+    <div className="flex min-h-0 w-full flex-col border-l border-line-500 bg-panel lg:w-[360px] lg:flex-none">
       {/* Header */}
       <div className="flex-none border-b border-line-200 bg-paper px-[18px] py-4">
         <div className="flex items-center gap-[9px]">
           <div className="flex h-[26px] w-[26px] items-center justify-center rounded-md bg-accent font-mono text-[10px] font-semibold text-white">
             AI
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="font-display text-[13px] font-semibold text-ink-950">Draftsmith</div>
             <div className="font-mono text-[10.5px] text-ink-400">whole-document feedback</div>
           </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close chat"
+              className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-md text-xs font-bold text-ink-400 hover:text-ink-950 lg:hidden"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
@@ -70,7 +82,7 @@ export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
               </div>
             )}
             <div
-              className={`max-w-[255px] px-[13px] py-2.5 text-[13px] leading-[1.55] ${
+              className={`max-w-[80%] px-[13px] lg:max-w-[255px] py-2.5 text-[13px] leading-[1.55] ${
                 m.role === "agent"
                   ? "rounded-[3px_11px_11px_11px] border border-line-200 bg-white text-ink-800"
                   : "rounded-[11px_3px_11px_11px] bg-ink-900 text-ink-inverse"
@@ -85,7 +97,7 @@ export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
             <div className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-[5px] bg-accent font-mono text-[9px] font-semibold text-white">
               AI
             </div>
-            <div className="max-w-[255px] animate-pulse rounded-[3px_11px_11px_11px] border border-line-200 bg-white px-[13px] py-2.5 text-[13px] leading-[1.55] text-ink-400">
+            <div className="max-w-[80%] animate-pulse lg:max-w-[255px] rounded-[3px_11px_11px_11px] border border-line-200 bg-white px-[13px] py-2.5 text-[13px] leading-[1.55] text-ink-400">
               Draftsmith is revising the document…
             </div>
           </div>
@@ -115,7 +127,7 @@ export function ChatPanel({ messages, chips, busy, onSend }: ChatPanelProps) {
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Ask, revise the plan, or add something missing…"
-            className="max-h-[120px] flex-1 resize-none border-none bg-transparent text-[13px] leading-[1.5] text-ink-950 outline-none disabled:opacity-45"
+            className="max-h-[120px] flex-1 resize-none border-none bg-transparent text-[16px] sm:text-[13px] leading-[1.5] text-ink-950 outline-none disabled:opacity-45"
           />
           <Button
             variant="solid"

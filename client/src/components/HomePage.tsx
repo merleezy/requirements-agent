@@ -39,7 +39,7 @@ export function HomePage({
     idea.trim().length > 0 && apiKey.trim().length > 0 && !backendError && !busy;
 
   return (
-    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
+    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-4 pt-8 pb-[90px] sm:px-[34px] sm:pt-[64px]">
       <div className="w-full max-w-[640px]">
         <div className="flex items-start justify-between">
           <Wordmark />
@@ -54,11 +54,11 @@ export function HomePage({
 
         <div className="overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
           {/* Masthead */}
-          <div className="border-b border-line-200 bg-paper-tint px-10 pt-8 pb-6">
+          <div className="border-b border-line-200 bg-paper-tint px-5 pt-7 pb-5 sm:px-10 sm:pt-8 sm:pb-6">
             <div className="mb-[9px] font-mono text-[10px] font-medium tracking-[0.16em] text-ink-400 uppercase">
               New Project
             </div>
-            <div className="font-display text-[27px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950">
+            <div className="font-display text-[22px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950 sm:text-[27px]">
               What are you building?
             </div>
             <div className="mt-1.5 text-[13.5px] leading-[1.5] text-ink-500">
@@ -69,19 +69,19 @@ export function HomePage({
           </div>
 
           {/* Idea input */}
-          <div className="border-b border-line-100 px-10 pt-5 pb-6">
+          <div className="border-b border-line-100 px-5 pt-5 pb-6 sm:px-10">
             <SectionHeading number="01" title="Project idea" />
             <textarea
               rows={7}
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               placeholder="e.g. A bookmarking app for design inspiration - save screenshots from the web, organize them, find them again by color or keyword…"
-              className="mt-3.5 w-full resize-y rounded-lg border border-line-400 bg-white px-3.5 py-3 text-[14px] leading-[1.6] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
+              className="mt-3.5 w-full resize-y rounded-lg border border-line-400 bg-white px-3.5 py-3 text-[16px] sm:text-[14px] leading-[1.6] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
             />
           </div>
 
           {/* API key onboarding */}
-          <div className="px-10 pt-5 pb-6">
+          <div className="px-5 pt-5 pb-6 sm:px-10">
             <SectionHeading number="02" title="OpenRouter API key" />
             <input
               type="password"
@@ -90,7 +90,7 @@ export function HomePage({
               placeholder="sk-or-…"
               spellCheck={false}
               autoComplete="off"
-              className="mt-3.5 w-full rounded-lg border border-line-400 bg-white px-3.5 py-2.5 font-mono text-[12.5px] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
+              className="mt-3.5 w-full rounded-lg border border-line-400 bg-white px-3.5 py-2.5 font-mono text-[16px] sm:text-[12.5px] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
             />
             {/* Trust-signal copy, per the spec's "API key handling" section */}
             <div className="mt-2.5 text-[12px] leading-[1.55] text-ink-500">
@@ -109,7 +109,7 @@ export function HomePage({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-line-200 bg-paper-tint px-10 py-4">
+          <div className="flex flex-col gap-3 border-t border-line-200 bg-paper-tint px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-10">
             {backendError ? (
               <div className="font-mono text-[10.5px] font-medium text-defect">
                 Backend error: {backendError}

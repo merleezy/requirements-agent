@@ -280,6 +280,11 @@ export default function App() {
    * posts are blocked in the handlers below with a chat notice. */
   const [chatBusy, setChatBusy] = useState(false);
 
+  /* Below the lg breakpoint the chat panel is a slide-over drawer instead of
+   * a fixed sidebar; this only affects the mobile layout - on desktop the
+   * panel is always visible and this state is ignored. */
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
+
   /* Final Review modal state & workflow */
   const [exportOptionsModalOpen, setExportOptionsModalOpen] = useState(false);
   const [finalReviewModalOpen, setFinalReviewModalOpen] = useState(false);
@@ -985,8 +990,9 @@ export default function App() {
     : 0;
 
   return (
-    /* Desktop-first per the design reference; below 1080px the page scrolls horizontally */
-    <div className="flex h-screen min-w-[1080px] flex-col bg-canvas">
+    /* Desktop layout matches the design reference; below lg the chat panel
+     * collapses into a slide-over drawer and paddings tighten. */
+    <div className="flex h-dvh flex-col bg-canvas">
       {settingsOpen ? (
         <SettingsPage onBack={() => setSettingsOpen(false)} />
       ) : state.prd === null ? (
@@ -1022,7 +1028,7 @@ export default function App() {
             finalReviewActive={finalReviewActive}
           />
           <div className="flex min-h-0 flex-1">
-            <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[34px] pb-[90px]">
+            <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-4 pt-4 pb-[90px] sm:px-[34px] sm:pt-[34px]">
               <PRDDocument
                 prd={state.prd}
                 comments={state.comments}
@@ -1037,12 +1043,45 @@ export default function App() {
                 reviewing={reviewing}
               />
             </div>
-            <ChatPanel
-              messages={state.chat}
-              chips={deriveChatChips(state.prd)}
-              busy={chatBusy}
-              onSend={handleSendChat}
-            />
+
+            {/* Backdrop behind the mobile chat drawer */}
+            {mobileChatOpen && (
+              <div
+                className="fixed inset-0 z-30 bg-ink-950/30 backdrop-blur-[2px] lg:hidden"
+                onClick={() => setMobileChatOpen(false)}
+              />
+            )}
+
+            {/* Sidebar on lg+; slide-over drawer below lg */}
+            <div
+              className={`fixed inset-y-0 right-0 z-40 flex w-full max-w-[400px] transform transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-auto lg:max-w-none lg:translate-x-0 lg:transition-none ${
+                mobileChatOpen ? "translate-x-0" : "translate-x-full"
+              }`}
+            >
+              <ChatPanel
+                messages={state.chat}
+                chips={deriveChatChips(state.prd)}
+                busy={chatBusy}
+                onSend={handleSendChat}
+                onClose={() => setMobileChatOpen(false)}
+              />
+            </div>
+
+            {/* Floating chat toggle, mobile only */}
+            {!mobileChatOpen && (
+              <button
+                type="button"
+                onClick={() => setMobileChatOpen(true)}
+                aria-label="Open Draftsmith chat"
+                className="fixed right-4 bottom-4 z-30 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-accent font-mono text-[12px] font-semibold text-white shadow-xl transition-colors hover:bg-accent-strong lg:hidden"
+              >
+                {chatBusy ? (
+                  <span className="h-2.5 w-2.5 animate-ping rounded-full bg-white/90" />
+                ) : (
+                  "AI"
+                )}
+              </button>
+            )}
           </div>
 
           {exportOptionsModalOpen && (

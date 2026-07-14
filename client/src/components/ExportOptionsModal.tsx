@@ -17,7 +17,7 @@ export function ExportOptionsModal({
 }: ExportOptionsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/40 p-4 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-[490px] rounded-xl border border-line-400 bg-white p-6 shadow-2xl space-y-5">
+      <div className="max-h-[90dvh] w-full max-w-[490px] overflow-auto rounded-xl border border-line-400 bg-white p-4 sm:p-6 shadow-2xl space-y-5">
         <div className="flex items-center justify-between border-b border-line-200 pb-3">
           <h3 className="font-display text-[17px] font-semibold text-ink-950">
             Export Document

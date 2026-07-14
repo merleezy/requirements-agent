@@ -193,7 +193,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   );
 
   return (
-    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
+    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-4 pt-8 pb-[90px] sm:px-[34px] sm:pt-[64px]">
       <div className="w-full max-w-[640px]">
         <div className="flex items-start justify-between">
           <Wordmark />
@@ -208,11 +208,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
 
         <div className="overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
           {/* Masthead */}
-          <div className="border-b border-line-200 bg-paper-tint px-10 pt-8 pb-6">
+          <div className="border-b border-line-200 bg-paper-tint px-5 pt-7 pb-5 sm:px-10 sm:pt-8 sm:pb-6">
             <div className="mb-[9px] font-mono text-[10px] font-medium tracking-[0.16em] text-ink-400 uppercase">
               Settings
             </div>
-            <div className="font-display text-[27px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950">
+            <div className="font-display text-[22px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950 sm:text-[27px]">
               Model settings
             </div>
             <div className="mt-1.5 text-[13.5px] leading-[1.5] text-ink-500">
@@ -222,7 +222,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           </div>
 
           {configError ? (
-            <div className="px-10 py-6">
+            <div className="px-5 py-6 sm:px-10">
               <div className="font-mono text-[10.5px] font-medium text-defect">
                 Couldn&rsquo;t load your current settings ({configError}).
               </div>
@@ -235,15 +235,15 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
               </Button>
             </div>
           ) : config === null ? (
-            <div className="px-10 py-6 font-mono text-[10.5px] font-medium text-ink-400">
+            <div className="px-5 py-6 font-mono sm:px-10 text-[10.5px] font-medium text-ink-400">
               Loading model settings…
             </div>
           ) : (
             <>
               {/* Presets */}
-              <div className="border-b border-line-100 px-10 pt-5 pb-6">
+              <div className="border-b border-line-100 px-5 pt-5 pb-6 sm:px-10">
                 <SectionHeading number="01" title="Presets" />
-                <div className="mt-3.5 grid grid-cols-3 gap-2.5">
+                <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                   {(catalog?.presets ?? []).map((preset) => {
                     const selected = sameModelConfig(config, preset.config);
                     return (
@@ -274,12 +274,12 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     );
                   })}
                   {catalog === null && !catalogError && (
-                    <div className="col-span-3 font-mono text-[10.5px] font-medium text-ink-400">
+                    <div className="col-span-full font-mono text-[10.5px] font-medium text-ink-400">
                       Loading presets…
                     </div>
                   )}
                   {catalogError && (
-                    <div className="col-span-3 font-mono text-[10.5px] font-medium text-ink-400">
+                    <div className="col-span-full font-mono text-[10.5px] font-medium text-ink-400">
                       Presets are unavailable while the model list can&rsquo;t be loaded.
                     </div>
                   )}
@@ -287,7 +287,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
               </div>
 
               {/* Per-stage models */}
-              <div className="px-10 pt-5 pb-2.5">
+              <div className="px-5 pt-5 pb-2.5 sm:px-10">
                 <SectionHeading number="02" title="Stage models" />
                 <div className="mt-1">
                   {stageRows.map((row, i) => {
@@ -296,7 +296,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     return (
                       <div
                         key={row.stage}
-                        className={`flex items-start justify-between gap-6 py-3.5 ${
+                        className={`flex flex-col gap-2.5 py-3.5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 ${
                           i < stageRows.length - 1 ? "border-b border-line-100" : ""
                         }`}
                       >
@@ -308,7 +308,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                             {row.description}
                           </div>
                         </div>
-                        <div className="w-[250px] flex-none">
+                        <div className="w-full flex-none sm:w-[250px]">
                           <select
                             value={current}
                             onChange={(e) => setStageModel(row.stage, e.target.value)}
@@ -325,7 +325,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                               </optgroup>
                             ))}
                           </select>
-                          <div className="mt-1 truncate text-right font-mono text-[10px] text-ink-300">
+                          <div className="mt-1 truncate text-left font-mono text-[10px] text-ink-300 sm:text-right">
                             {known
                               ? known.promptPrice !== null && known.completionPrice !== null
                                 ? `${formatPerMillion(known.promptPrice)} in · ${formatPerMillion(known.completionPrice)} out / 1M tokens`
@@ -344,7 +344,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-4 border-t border-line-200 bg-paper-tint px-10 py-4">
+          <div className="flex flex-col gap-3 border-t border-line-200 bg-paper-tint px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10">
             {status}
             <Button
               variant="solid"
