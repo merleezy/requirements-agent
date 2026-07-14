@@ -37,17 +37,17 @@ export function ClarifyView({ round, questions, busy, error, onSubmit }: Clarify
     );
 
   return (
-    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-[34px] pt-[64px] pb-[90px]">
+    <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto px-4 pt-8 pb-[90px] sm:px-[34px] sm:pt-[64px]">
       <div className="w-full max-w-[640px]">
         <Wordmark />
 
         <div className="overflow-hidden rounded-lg border border-line-400 bg-paper shadow-doc">
           {/* Masthead */}
-          <div className="border-b border-line-200 bg-paper-tint px-10 pt-8 pb-6">
+          <div className="border-b border-line-200 bg-paper-tint px-5 pt-7 pb-5 sm:px-10 sm:pt-8 sm:pb-6">
             <div className="mb-[9px] font-mono text-[10px] font-medium tracking-[0.16em] text-ink-400 uppercase">
               {round === 1 ? "Clarifying Questions" : "Clarifying Questions · Round 2"}
             </div>
-            <div className="font-display text-[27px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950">
+            <div className="font-display text-[22px] leading-[1.15] font-bold tracking-[-0.015em] text-ink-950 sm:text-[27px]">
               {round === 1 ? "A few questions before drafting" : "A couple of follow-ups"}
             </div>
             <div className="mt-1.5 text-[13.5px] leading-[1.5] text-ink-500">
@@ -58,7 +58,7 @@ export function ClarifyView({ round, questions, busy, error, onSubmit }: Clarify
           </div>
 
           {/* Questions */}
-          <div className="px-10 pt-5 pb-6">
+          <div className="px-5 pt-5 pb-6 sm:px-10">
             {questions.map((q, i) => (
               <div
                 key={q.id}
@@ -82,7 +82,7 @@ export function ClarifyView({ round, questions, busy, error, onSubmit }: Clarify
                         setAnswers((a) => ({ ...a, [q.id]: e.target.value }))
                       }
                       placeholder="One sentence - or leave blank to skip"
-                      className="mt-2.5 w-full rounded-lg border border-line-400 bg-white px-3.5 py-2.5 text-[13.5px] leading-[1.5] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
+                      className="mt-2.5 w-full rounded-lg border border-line-400 bg-white px-3.5 py-2.5 text-[16px] sm:text-[13.5px] leading-[1.5] text-ink-950 outline-none placeholder:text-ink-300 focus:border-accent"
                     />
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export function ClarifyView({ round, questions, busy, error, onSubmit }: Clarify
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-4 border-t border-line-200 bg-paper-tint px-10 py-4">
+          <div className="flex flex-col gap-3 border-t border-line-200 bg-paper-tint px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10">
             {error ? (
               <div className="min-w-0 font-mono text-[10.5px] font-medium text-defect">{error}</div>
             ) : busy === "check" ? (

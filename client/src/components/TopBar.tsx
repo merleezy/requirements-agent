@@ -30,22 +30,22 @@ export function TopBar({
         ? "1 flag open"
         : `${flagCount} flags open`;
   return (
-    <div className="flex h-[54px] flex-none items-center justify-between border-b border-line-500 bg-paper px-6">
+    <div className="flex h-[54px] flex-none items-center justify-between gap-3 border-b border-line-500 bg-paper px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3.5">
-        <div className="font-display text-[13px] font-semibold tracking-[-0.01em] text-ink-950">
+        <div className="min-w-0 truncate font-display text-[13px] font-semibold tracking-[-0.01em] text-ink-950">
           {title}
         </div>
-        <div className="font-mono text-[10px] font-medium tracking-[0.1em] text-ink-400 uppercase">
+        <div className="hidden flex-none font-mono text-[10px] font-medium tracking-[0.1em] text-ink-400 uppercase sm:block">
           PRD · {version}
         </div>
       </div>
-      <div className="flex items-center gap-3.5">
+      <div className="flex flex-none items-center gap-2.5 sm:gap-3.5">
         <div
-          className={`font-mono text-[10.5px] font-medium ${reviewing ? "animate-pulse text-ink-400" : "text-ink-500"}`}
+          className={`hidden font-mono text-[10.5px] font-medium sm:block ${reviewing ? "animate-pulse text-ink-400" : "text-ink-500"}`}
         >
           {flagSummary}
         </div>
-        <div className="h-5 w-px bg-line-300" />
+        <div className="hidden h-5 w-px bg-line-300 sm:block" />
         <Button variant="neutral" onClick={onOpenSettings}>
           Settings
         </Button>

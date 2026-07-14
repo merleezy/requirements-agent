@@ -114,7 +114,7 @@ function IssueCard({
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2 pt-1 border-t border-line-200 mt-1">
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-line-200 mt-1">
         <Button
           variant="primary"
           size="post"
@@ -195,9 +195,9 @@ export function FinalReviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/40 p-4 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-[660px] max-h-[88vh] flex flex-col rounded-xl border border-line-400 bg-white p-6 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-[660px] max-h-[90dvh] flex flex-col rounded-xl border border-line-400 bg-white p-4 sm:p-6 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-line-200 pb-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-line-200 pb-4">
           <div className="flex items-center gap-3">
             {evaluating || isRevising ? (
               <span className="flex h-3 w-3 rounded-full bg-accent animate-ping" />
@@ -532,7 +532,7 @@ export function FinalReviewModal({
                 : "Apply fixes individually, respond with notes, or dismiss findings."}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <Button variant="neutral" onClick={onCancel}>
                 Cancel
               </Button>
