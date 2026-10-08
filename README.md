@@ -72,9 +72,3 @@ npm run build   # TypeScript check + Vite production bundle
 - [docs/agent-prompts.md](docs/agent-prompts.md) - the agent system prompts, with a revision log explaining every change
 - [design/prd-doc-reference.html](design/prd-doc-reference.html) - visual design reference for the PRD document view
 - [CLAUDE.md](CLAUDE.md) - architectural rules, system context, and decision records
-
-## Status
-
-All ten build-order steps are implemented: the full pipeline (clarify, draft, critic, local and global revision, final review), the home/onboarding page, model settings, and gated Markdown export.
-Work has since moved to hardening the harness itself: the final-review stage enforces the failure-scenario and requirement-anchor gates deterministically in code (not just prompt wording), and dismissed findings persist as durable accepted-risk decisions.
-The server has 115 unit tests (agents' message builders and output validators, the review gates, `callLLM`, model config, routes); broader testing, CI/CD, and logging are deliberately deferred per the spec.
